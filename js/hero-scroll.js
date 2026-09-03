@@ -42,31 +42,40 @@
   // an attempt actually start playing for a beat (imperceptible — muted,
   // hidden behind the hero text, from currentTime 0) before pausing it,
   // which is what gives WebKit a real reason to keep fetching afterward.
-  var primed = false;
+  // NOTE: this is deliberately NOT a "run once and remember it worked"
+  // latch. Scrolling the hero out of view and back (down past it, then
+  // back up) is exactly the case where iOS/WebKit reclaims a PAUSED,
+  // off-screen video's decoded frame to save memory — our own JS state
+  // still says currentTime 0 and readyState is fine, but nothing is
+  // actually painted until something re-primes it. A one-shot "primed =
+  // true forever" flag would mean that recovery never gets attempted a
+  // second time, which is exactly the bug reported: works once, then
+  // shows the background again after scrolling away and back.
+  var priming = false;
   function primeBuffering() {
-    if (primed || video.readyState >= 2 /* HAVE_CURRENT_DATA */) { primed = true; return; }
+    if (priming || video.readyState >= 2 /* HAVE_CURRENT_DATA */) return;
+    priming = true;
+    function done() { priming = false; video.pause(); }
     var p = video.play();
     if (p && p.then) {
-      p.then(function () {
-        // give it a beat of real "playing" state before reclaiming control —
-        // pausing on the very next tick was the bug (see above)
-        window.setTimeout(function () { primed = true; video.pause(); }, 120);
-      }).catch(function () {
+      // give it a beat of real "playing" state before reclaiming control —
+      // pausing on the very next tick was an earlier version's bug
+      p.then(function () { window.setTimeout(done, 120); }).catch(function () {
         // veto'd (no user gesture yet, Low Power Mode, etc.) — the
-        // touch/scroll listeners below retry on the user's first real
+        // touch/scroll listeners below retry on the user's next real
         // interaction, which iOS treats very differently from a cold,
-        // gesture-less attempt at page load
+        // gesture-less attempt
+        priming = false;
       });
     } else {
-      primed = true;
-      video.pause();
+      done();
     }
   }
   primeBuffering();
-  // Re-attempted on first touch/scroll/pointerdown: if the page-load
-  // attempt above got vetoed for lacking a user gesture, the user's own
-  // first interaction with the page IS one, and this is what actually
-  // unblocks it on a real device.
+  // Retried on every touch/scroll/pointerdown, not just the first — cheap
+  // (it no-ops instantly once the video already has a current frame) and
+  // it's what recovers a decoded frame iOS silently dropped while the hero
+  // was scrolled out of view.
   ['touchstart', 'pointerdown', 'scroll'].forEach(function (evt) {
     window.addEventListener(evt, primeBuffering, { passive: true });
   });
@@ -99,13 +108,22 @@
   let seekReady = false;
   let seekBusy = false;
   let pendingSeek = -1;
+  // Set right before the hero scrolls back into view (see the
+  // IntersectionObserver below) to force one real seek through even if the
+  // target time barely differs from what JS thinks currentTime already is.
+  // Needed because a dropped/reclaimed decoded frame (see primeBuffering
+  // above) leaves our state saying "already at 0, nothing to do" while the
+  // screen is actually showing nothing for that video.
+  let forceNextSeek = false;
 
   function requestSeek(t) {
     if (!seekReady) return;
     if (seekBusy) { pendingSeek = t; return; }
     // Skip micro-seeks below one source frame (1/60s) — they cost a full
-    // async seek round-trip and change nothing visible.
-    if (Math.abs(video.currentTime - t) < 1 / 60) return;
+    // async seek round-trip and change nothing visible. Bypassed once by
+    // forceNextSeek right after the hero re-enters view.
+    if (!forceNextSeek && Math.abs(video.currentTime - t) < 1 / 60) return;
+    forceNextSeek = false;
     seekBusy = true;
     video.currentTime = t;
   }
@@ -246,6 +264,26 @@
 
   window.addEventListener('scroll', wake, { passive: true });
   window.addEventListener('resize', wake);
+
+  // Re-entry recovery: whenever the hero comes back into view (scrolled
+  // down past it, then back up — or the reverse), force a fresh seek and
+  // a fresh priming attempt. This is what actually fixes "works once, then
+  // shows the background again after scrolling away and back" — without
+  // it, both requestSeek()'s micro-seek skip and primeBuffering()'s
+  // readyState check assume nothing needs to change, when what's actually
+  // missing is a frame iOS quietly dropped while this was off-screen.
+  if ('IntersectionObserver' in window) {
+    var reentryIo = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          forceNextSeek = true;
+          primeBuffering();
+          wake();
+        }
+      });
+    }, { threshold: 0 });
+    reentryIo.observe(wrapper);
+  }
 
   function init() {
     seekReady = true;
