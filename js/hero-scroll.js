@@ -26,6 +26,40 @@
   // at load — swapping encodes mid-scrub would restart the download.
   const devicePx = window.innerWidth * (window.devicePixelRatio || 1);
   video.src = devicePx >= 1600 ? video.dataset.srcHd : video.dataset.srcSd;
+  video.load();
+
+  // MOBILE FIX: a video that only ever gets scrubbed via currentTime (never
+  // actually played) is exactly the case iOS Safari — and, more loosely,
+  // Chrome on Android — refuse to buffer past the poster frame for.
+  // preload="auto" is advisory only; without an actual play() call these
+  // browsers treat the video as "not really needed yet" and never fetch
+  // beyond metadata, especially off wifi. That reads as "the hero doesn't
+  // load" on a phone while working fine on desktop. The fix: kick off a
+  // real play() (allowed without a user gesture because the video is
+  // muted + playsinline) and pause it again immediately — this forces the
+  // real decode/buffer pipeline to spin up with no visible playback, since
+  // it's paused again before the next paint and currentTime is still ~0.
+  // Retried on the user's first touch/scroll too, in case Low Power Mode
+  // or a strict data-saver setting vetoed the very first silent attempt.
+  var primed = false;
+  function primeBuffering() {
+    if (primed) return;
+    if (video.readyState >= 2 /* HAVE_CURRENT_DATA */) { primed = true; return; }
+    var p = video.play();
+    if (p && p.then) {
+      p.then(function () { primed = true; video.pause(); }).catch(function () {
+        // veto'd (Low Power Mode etc.) — the touch/scroll listeners below
+        // will try again on the user's first real interaction
+      });
+    } else {
+      primed = true;
+      video.pause();
+    }
+  }
+  primeBuffering();
+  ['touchstart', 'pointerdown', 'scroll'].forEach(function (evt) {
+    window.addEventListener(evt, primeBuffering, { passive: true });
+  });
 
   // Standard ease-out-expo curve (same character as cubic-bezier(0.16,1,0.3,1)):
   // fast off the mark, settles smoothly. Applied to the linear scroll progress
