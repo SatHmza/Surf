@@ -36,15 +36,16 @@
 
 <!-- Ocean background — a real looping water video, fixed behind
      everything; the glass content shell (#main, see css/style.css)
-     backdrop-blurs whatever it plays. No <source> and no autoplay/preload
-     here on purpose (same pattern as #heroVideo's data-src-hd/sd below):
-     js/main.js decides whether this ever downloads at all. On a phone,
-     small screen, coarse pointer, reduced motion, or a slow/data-saver
-     connection, it never gets a src — the poster (a real frame of the
-     loop) just sits there as a static image, which skips ~13.5MB of
-     download plus the ongoing cost of decoding + blur-compositing a
-     playing video for the entire time someone is on the page. -->
-<video id="oceanBg" muted loop playsinline aria-hidden="true" tabindex="-1"
+     backdrop-blurs whatever it plays. No <source> here on purpose (same
+     pattern as #heroVideo's data-src-hd/sd below): js/main.js decides
+     whether this ever downloads at all — skipped under reduced motion or
+     a slow/data-saver connection, where the poster (a real frame of the
+     loop) just sits there as a static image instead. Plays on phones too.
+     autoplay is required, not optional, for the same reason as #heroVideo:
+     iOS/WebKit only grants silent-autoplay-without-a-gesture to a video
+     whose autoplay attribute was present in the markup; see js/main.js
+     for the touch/scroll-triggered fallback for when even that is vetoed. -->
+<video id="oceanBg" muted loop playsinline autoplay aria-hidden="true" tabindex="-1"
        poster="assets/video/ocean-poster.jpg"
        data-src="assets/video/ocean-loop.mp4"></video>
 

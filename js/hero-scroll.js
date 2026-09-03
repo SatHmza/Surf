@@ -30,34 +30,32 @@
 
   // MOBILE FIX: a video that only ever gets scrubbed via currentTime (never
   // actually played) is exactly the case mobile browsers refuse to buffer
-  // past the poster frame for — preload="auto" is advisory only, and
-  // without a real play() they treat it as "not really needed yet" and
-  // never fetch beyond metadata. iOS/WebKit is stricter still: it only
-  // grants the "silent autoplay, no gesture needed" allowance to a video
-  // whose `autoplay` attribute was present in the markup (see index.html) —
-  // a script-triggered play() with no user gesture can be vetoed even when
-  // muted+playsinline, which is why this can work in a Chrome/Android test
-  // and still show nothing on a real iPhone. Two layers here: the markup
-  // attribute does the real work on iOS, and this 'play' listener slams it
-  // straight back to paused the instant ANYTHING starts it playing —
-  // native autoplay, primeBuffering() below, anything — so nothing is ever
-  // actually visible; hero-scroll.js owns currentTime entirely via scroll.
-  video.addEventListener('play', function () { video.pause(); });
-
-  // Fallback for browsers that don't extend the autoplay attribute's
-  // allowance to a src assigned later via JS: an explicit play()-then-
-  // pause(), retried on the user's first touch/scroll in case Low Power
-  // Mode or a strict data-saver setting vetoed the very first silent
-  // attempt.
+  // past the poster frame for — preload="auto" is advisory only, and on
+  // cellular especially, WebKit/iOS silently downgrades it to "fetch
+  // nothing beyond the first few KB" until something it recognizes as a
+  // real playback attempt happens. The `autoplay` attribute on the tag
+  // (index.html) is the first line of defense, but a previous version of
+  // this fix ALSO force-paused on every single 'play' event the instant it
+  // fired — which, on a real iPhone, was cutting the browser off before it
+  // had actually fetched anything, so the video looked identical to fully
+  // broken. That blanket pause is removed: primeBuffering() below now lets
+  // an attempt actually start playing for a beat (imperceptible — muted,
+  // hidden behind the hero text, from currentTime 0) before pausing it,
+  // which is what gives WebKit a real reason to keep fetching afterward.
   var primed = false;
   function primeBuffering() {
-    if (primed) return;
-    if (video.readyState >= 2 /* HAVE_CURRENT_DATA */) { primed = true; return; }
+    if (primed || video.readyState >= 2 /* HAVE_CURRENT_DATA */) { primed = true; return; }
     var p = video.play();
     if (p && p.then) {
-      p.then(function () { primed = true; video.pause(); }).catch(function () {
-        // veto'd (Low Power Mode etc.) — the touch/scroll listeners below
-        // will try again on the user's first real interaction
+      p.then(function () {
+        // give it a beat of real "playing" state before reclaiming control —
+        // pausing on the very next tick was the bug (see above)
+        window.setTimeout(function () { primed = true; video.pause(); }, 120);
+      }).catch(function () {
+        // veto'd (no user gesture yet, Low Power Mode, etc.) — the
+        // touch/scroll listeners below retry on the user's first real
+        // interaction, which iOS treats very differently from a cold,
+        // gesture-less attempt at page load
       });
     } else {
       primed = true;
@@ -65,6 +63,10 @@
     }
   }
   primeBuffering();
+  // Re-attempted on first touch/scroll/pointerdown: if the page-load
+  // attempt above got vetoed for lacking a user gesture, the user's own
+  // first interaction with the page IS one, and this is what actually
+  // unblocks it on a real device.
   ['touchstart', 'pointerdown', 'scroll'].forEach(function (evt) {
     window.addEventListener(evt, primeBuffering, { passive: true });
   });

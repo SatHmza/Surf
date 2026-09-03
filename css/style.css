@@ -1505,14 +1505,13 @@ svg{
    thing a phone GPU does in CSS — its cost scales with both the blur
    radius AND the area being blurred, and this page stacks THREE separate
    blurred layers (the nav pill, the whole #main glass pane — which is
-   most of the viewport — and every testimonial card) on top of what can
-   also be a playing video underneath. On a mid-range Android GPU that
-   combination is what actually drops scroll framerate, not any one rule
-   here in isolation. None of this changes how the glass LOOKS in any
+   most of the viewport — and every testimonial card) on top of the
+   playing ocean background video underneath. On a mid-range Android GPU
+   that combination is what actually drops scroll framerate, not any one
+   rule here in isolation. None of this changes how the glass LOOKS in any
    meaningful way at phone viewing distance — it just makes it cheaper to
-   render. (js/main.js separately skips the ocean video's decode entirely
-   on the same breakpoint — the two fixes target different costs: this is
-   compositing, that one is decode + battery.)
+   render, which matters more now that the ocean video plays on phones too
+   (js/main.js) rather than being skipped outright.
    ========================================================================== */
 @media (max-width: 900px){
   .nav-pill{

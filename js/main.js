@@ -106,42 +106,55 @@
 
   /* ------------------------------------------------------------------ */
   /* Ocean background video — the looping water footage behind the glass */
-  /* shell. This is the single biggest mobile cost on the page: a fixed  */
-  /* full-viewport video, decoded continuously, sampled by multiple      */
-  /* backdrop-filter blurs on top of it (#main, .testimonial-card, the   */
-  /* nav pill) — on a phone GPU that combination is what actually tanks  */
-  /* scroll framerate and burns battery, not any single element alone.   */
-  /* So on a phone / small screen / touch device / reduced motion / a    */
-  /* slow or data-saver connection, it never loads at all — the video    */
-  /* has no src (see index.html), so its poster (a real frame of the     */
-  /* loop) just sits there as a static image. Visually near-identical    */
-  /* behind frosted glass; costs nothing to decode or composite.         */
+  /* shell. Now plays on phones too (previously skipped there to save    */
+  /* battery/data — re-enabled by request). Still skipped under reduced  */
+  /* motion or a slow/data-saver connection, where the poster (a real    */
+  /* frame of the loop) just sits there as a static image instead.       */
   /* ------------------------------------------------------------------ */
   (function () {
     var ocean = document.getElementById("oceanBg");
     if (!ocean || typeof ocean.pause !== "function") return;
 
     var noMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var isSmallOrTouch = window.matchMedia &&
-      (window.matchMedia("(max-width: 900px)").matches || window.matchMedia("(pointer: coarse)").matches);
     var conn = navigator.connection || navigator.webkitConnection || navigator.mozConnection;
     var isConstrainedConnection = !!(conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || "")));
 
-    if (noMotion || isSmallOrTouch || isConstrainedConnection) {
+    if (noMotion || isConstrainedConnection) {
       return; // leave it exactly as authored: no src, poster frame only
     }
 
     ocean.src = ocean.dataset.src;
     ocean.preload = "auto";
-    var playPromise = ocean.play(); // kick off; autoplay veto just leaves the poster
-    if (playPromise && playPromise.catch) playPromise.catch(function () {});
+    ocean.load();
+
+    // Same iOS/WebKit quirk as the hero video (js/hero-scroll.js): a
+    // gesture-less play() at page load can be silently vetoed on a real
+    // phone even when muted+playsinline+autoplay are all set. Retrying on
+    // the user's first touch/scroll is what actually unblocks it there —
+    // that's a genuine user gesture, which the page-load attempt never had.
+    var started = false;
+    function tryPlay() {
+      if (started) return;
+      var p = ocean.play();
+      if (p && p.then) {
+        p.then(function () { started = true; }).catch(function () {
+          // still vetoed (Low Power Mode etc.) — poster stays until the
+          // next touch/scroll retry, or visibilitychange below
+        });
+      } else {
+        started = true;
+      }
+    }
+    tryPlay();
+    ["touchstart", "pointerdown", "scroll"].forEach(function (evt) {
+      window.addEventListener(evt, tryPlay, { passive: true });
+    });
 
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
         ocean.pause();
       } else {
-        var p = ocean.play();
-        if (p && p.catch) p.catch(function () { /* autoplay veto — poster stays */ });
+        tryPlay();
       }
     });
   })();
