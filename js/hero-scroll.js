@@ -1,21 +1,31 @@
 (function () {
-  // Real values from assets/timelapse/: 53 frames (aerial drone footage of
-  // a surfer riding a wave into shore), named ezgif-frame-001.jpg ..
-  // ezgif-frame-053.jpg (3-digit, zero-padded, 1-indexed). The old 103-frame
-  // set's leftover files (ezgif-frame-054.jpg onward, if still present)
-  // are unused now and can be deleted from assets/timelapse/.
-  const FRAME_COUNT = 53;
-  const FRAME_PATH = i => `assets/timelapse/ezgif-frame-${String(i + 1).padStart(3, '0')}.jpg`;
+  // Hero scrub — a 60fps VIDEO seeked by scroll position, replacing the
+  // old canvas frame-sequence (64 stills at 8fps read as steppy).
+  // assets/hero/hero-scrub.mp4 is the 4:05-4:13 ride from the POV source
+  // clip, encoded specifically for scrubbing: H.264, 1280w, 60fps,
+  // keyframe every 8 frames, no B-frames (-g 8 -bf 0), so an arbitrary
+  // currentTime seek only ever decodes a handful of frames. The video
+  // NEVER plays — scroll progress maps to currentTime and that's it.
+  // Re-encode recipe lives in KNOWLEDGE.md.
 
   const wrapper = document.getElementById('heroScrollWrapper');
-  const canvas = document.getElementById('heroCanvas');
-  const ctx = canvas.getContext('2d');
-  const overlay = document.getElementById('whiteoutOverlay');
+  const sticky = document.getElementById('heroSticky');
+  const video = document.getElementById('heroVideo');
+  if (!wrapper || !sticky || !video) return;
   const beats = Array.from(document.querySelectorAll('.hero-beat'));
   const progressDots = Array.from(document.querySelectorAll('.hero-progress__dot'));
   const progressFill = document.getElementById('heroProgressFill');
   const scrollCue = document.getElementById('heroScrollCue');
   const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Adaptive quality: the markup carries no <source>; pick the encode by
+  // how many DEVICE pixels the full-bleed hero actually spans. ≥1600
+  // device px gets the 1920w/15MB file (a 1280w encode upscaled ~2x on
+  // those screens is exactly what reads as "not 4K"); below that the
+  // 1280w/8MB file is already at or above native resolution. Decided once
+  // at load — swapping encodes mid-scrub would restart the download.
+  const devicePx = window.innerWidth * (window.devicePixelRatio || 1);
+  video.src = devicePx >= 1600 ? video.dataset.srcHd : video.dataset.srcSd;
 
   // Standard ease-out-expo curve (same character as cubic-bezier(0.16,1,0.3,1)):
   // fast off the mark, settles smoothly. Applied to the linear scroll progress
@@ -26,78 +36,43 @@
     return t <= 0 ? 0 : t >= 1 ? 1 : 1 - Math.pow(2, -10 * t);
   }
 
-  const images = new Array(FRAME_COUNT);
-  const loadedFlags = new Array(FRAME_COUNT).fill(false);
-  let currentFrame = -1;
-  let currentFrac = 0;
-
   // Scroll-scrub smoothing: a fast flick of a trackpad/wheel can move the
   // raw scroll position by a huge chunk of the ~460vh hero in a single
-  // frame. Rendering that instantly used to make the timelapse jump several
-  // frames at once and snap the beat text straight to its end state, which
-  // read as broken rather than just "fast". Instead we track the raw
-  // scroll-derived TARGET progress separately from a DISPLAY progress that
-  // eases toward it a little every animation frame, so a fast scroll still
-  // catches up smoothly over a few frames instead of teleporting.
+  // frame. We track the raw scroll-derived TARGET progress separately from
+  // a DISPLAY progress that eases toward it a little every animation frame,
+  // so a fast scroll still catches up smoothly instead of teleporting.
   let targetProgress = 0;
   let displayProgress = 0;
-  const SMOOTHING = reducedMotion ? 1 : 0.14; // 1 = no smoothing (instant)
+  const SMOOTHING = reducedMotion ? 1 : 0.11; // 1 = no smoothing (instant); lower = floatier
   let looping = false;
 
-  // Falls back to the nearest ALREADY-loaded frame when the exact target
-  // isn't ready yet, so a fast scroll never leaves the canvas stuck on a
-  // stale frame while its neighbours are still in flight.
-  function nearestLoadedFrame(target) {
-    if (loadedFlags[target]) return target;
-    for (let d = 1; d < FRAME_COUNT; d++) {
-      if (target - d >= 0 && loadedFlags[target - d]) return target - d;
-      if (target + d < FRAME_COUNT && loadedFlags[target + d]) return target + d;
-    }
-    return -1;
-  }
+  /* Seek gate: video seeks are async, and assigning currentTime while a
+     previous seek is still in flight makes browsers drop/queue them
+     unpredictably (visible as hitching). So only one seek is ever in
+     flight; the newest wanted time waits in pendingSeek and fires from
+     the 'seeked' event. Net effect: the video scrubs as fast as the
+     decoder can actually deliver frames, never faster, never stale. */
+  let seekReady = false;
+  let seekBusy = false;
+  let pendingSeek = -1;
 
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    drawFrame(Math.max(currentFrame, 0), currentFrac);
+  function requestSeek(t) {
+    if (!seekReady) return;
+    if (seekBusy) { pendingSeek = t; return; }
+    // Skip micro-seeks below one source frame (1/60s) — they cost a full
+    // async seek round-trip and change nothing visible.
+    if (Math.abs(video.currentTime - t) < 1 / 60) return;
+    seekBusy = true;
+    video.currentTime = t;
   }
-
-  // Draws one image "cover"-fit into the canvas (letterboxed/cropped to
-  // fill, matching CSS object-fit: cover). Pulled out of drawFrame so the
-  // cross-fade below can call it twice — once per frame being blended.
-  function drawImageCover(img, alpha) {
-    if (!img || !img.complete || img.naturalWidth === 0) return;
-    const canvasRatio = canvas.width / canvas.height;
-    const imgRatio = img.naturalWidth / img.naturalHeight;
-    let dw, dh, dx, dy;
-    if (imgRatio > canvasRatio) {
-      dh = canvas.height; dw = img.naturalWidth * (dh / img.naturalHeight);
-      dx = (canvas.width - dw) / 2; dy = 0;
-    } else {
-      dw = canvas.width; dh = img.naturalHeight * (dw / img.naturalWidth);
-      dx = 0; dy = (canvas.height - dh) / 2;
+  video.addEventListener('seeked', function () {
+    seekBusy = false;
+    if (pendingSeek >= 0) {
+      const t = pendingSeek;
+      pendingSeek = -1;
+      requestSeek(t);
     }
-    if (alpha !== undefined && alpha < 1) ctx.globalAlpha = alpha;
-    ctx.drawImage(img, dx, dy, dw, dh);
-    if (alpha !== undefined && alpha < 1) ctx.globalAlpha = 1;
-  }
-
-  // Draws frame `index`, cross-fading toward frame `index + 1` by `frac`
-  // (0-1, the fractional part of the scroll-driven frame position — see
-  // render() below). Without this, scrolling between two stills was a hard
-  // filmstrip swap; blending the two makes the timelapse read as continuous
-  // motion instead.
-  function drawFrame(index, frac) {
-    const a = loadedFlags[index] ? index : nearestLoadedFrame(index);
-    if (a === -1) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawImageCover(images[a]);
-    if (frac && frac > 0.004) {
-      const nextIndex = Math.min(index + 1, FRAME_COUNT - 1);
-      const b = loadedFlags[nextIndex] ? nextIndex : nearestLoadedFrame(nextIndex);
-      if (b !== -1 && b !== a) drawImageCover(images[b], frac);
-    }
-  }
+  });
 
   // How far off-center a beat starts/ends, in px. Slightly larger on narrow
   // viewports so the slide still reads as a deliberate motion rather than
@@ -121,7 +96,6 @@
         // (progress 0), so it holds fully centered/opaque instead of
         // computing (progress-start)/fadeMargin, which would evaluate to 0
         // right at the top of the page and hide the opening headline/CTA
-        // (and slide it off to the side) on load
         if (start === 0) {
           localProgress = progress > end - fadeMargin ? (end - progress) / fadeMargin : 1;
         } else if (progress < start + fadeMargin) {
@@ -164,22 +138,20 @@
   }
 
   // Paints everything hero-related from a single (already-smoothed)
-  // progress value: the canvas frame/cross-fade, the Ken Burns drift, the
-  // beat text, the progress rail, the scroll cue and the whiteout ramp.
+  // progress value: the video seek, the Ken Burns drift, the beat text,
+  // the progress rail, the scroll cue and the exit dissolve.
   function render(progress) {
-    // Fractional frame position: the integer part picks the base frame,
-    // the remainder drives how far drawFrame cross-fades toward the next
-    // one, so motion stays smooth even though only 53 stills exist.
-    const exact = progress * (FRAME_COUNT - 1);
-    currentFrame = Math.min(FRAME_COUNT - 1, Math.floor(exact));
-    currentFrac = exact - currentFrame;
-    drawFrame(currentFrame, currentFrac);
+    if (seekReady) {
+      // clamp a hair inside the duration — seeking exactly to the end can
+      // land on a black terminator frame in some demuxers
+      const dur = video.duration || 8;
+      requestSeek(Math.min(progress * dur, dur - 0.02));
+    }
 
-    // Slow, continuous zoom drift — independent of the frame cross-fade
-    // above — so the canvas never looks perfectly static between scroll
-    // ticks. Skipped under reduced-motion since it's a standing transform,
-    // not a one-off transition.
-    if (!reducedMotion) canvas.style.transform = 'scale(' + (1 + progress * 0.06) + ')';
+    // Slow, continuous zoom drift — so the frame never looks perfectly
+    // static between scroll ticks. Skipped under reduced-motion since
+    // it's a standing transform, not a one-off transition.
+    if (!reducedMotion) video.style.transform = 'scale(' + (1 + progress * 0.06) + ')';
 
     updateBeats(progress);
     updateProgressDots(progress);
@@ -192,11 +164,19 @@
       scrollCue.style.opacity = progress >= cueFadeEnd ? 0 : 1 - progress / cueFadeEnd;
     }
 
-    // Beats now run through progress 0.84 (see index.html data-start/
-    // data-end), so the whiteout ramp starts right after the last one
-    // instead of leaving a stretch of dead scroll in between.
-    const whiteoutStart = 0.86;
-    overlay.style.opacity = progress > whiteoutStart ? (progress - whiteoutStart) / (1 - whiteoutStart) : 0;
+    // EXIT DISSOLVE — replaces the old white-out (a full-white overlay
+    // that just sat there looking frozen for the last 15% of the scroll).
+    // Instead the whole sticky hero fades away, revealing the LIVE ocean
+    // background video running behind it (.hero-scroll-wrapper is
+    // transparent), and the glass pane then scrolls up over that. The
+    // background keeps moving through the transition, so nothing ever
+    // reads as frozen. Beats end at 0.84 (see index.html data-end), so
+    // the dissolve starts right after the last one.
+    const exitStart = 0.85;
+    const exit = progress > exitStart ? (progress - exitStart) / (1 - exitStart) : 0;
+    sticky.style.opacity = String(1 - exit);
+    // don't leave an invisible CTA hovering over the ocean, catching clicks
+    sticky.style.pointerEvents = exit > 0.4 ? 'none' : '';
   }
 
   // Runs every animation frame while there's ground to cover between the
@@ -221,88 +201,31 @@
   }
 
   window.addEventListener('scroll', wake, { passive: true });
-  window.addEventListener('resize', () => { resizeCanvas(); wake(); });
+  window.addEventListener('resize', wake);
 
-  /* ---- loading: priority frames (start/middle/end) first with a small
-     concurrency pool, then the rest sorted by proximity to the middle
-     frame, instead of firing all FRAME_COUNT requests at once. Keeps the
-     scroll listener from starting before there's anything to show, and
-     avoids saturating the network/decode pipeline with 100+ simultaneous
-     requests, which is what caused frames to stall while scrolling
-     through parts of the sequence that hadn't loaded yet. ---- */
-
-  function loadFrame(index, onDone) {
-    if (loadedFlags[index]) return onDone();
-    const img = new Image();
-    images[index] = img;
-    img.decoding = 'async';
-    img.onload = () => {
-      loadedFlags[index] = true;
-      // redraw if this frame is either half of the current blend (base or
-      // the next one being cross-faded toward)
-      if (index === currentFrame || index === currentFrame + 1) drawFrame(currentFrame, currentFrac);
-      onDone();
-    };
-    img.onerror = onDone;
-    img.src = FRAME_PATH(index);
+  function init() {
+    seekReady = true;
+    // Wait two animation frames before the first paint. If the tab loaded
+    // in the background (a link opened from Instagram/WhatsApp lands in an
+    // unfocused tab), layout values can briefly read 0, which would bake a
+    // wrong initial state in. Two rAFs land after the browser has
+    // committed a real layout for a now-visible tab.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      displayProgress = targetProgress = getTargetProgress();
+      render(displayProgress);
+      wake();
+    }));
   }
 
-  function loadQueueWithConcurrency(queue, concurrency, onQueueDone) {
-    let next = 0;
-    let inFlight = 0;
-    function pump() {
-      while (inFlight < concurrency && next < queue.length) {
-        const idx = queue[next++];
-        inFlight++;
-        loadFrame(idx, () => { inFlight--; pump(); });
-      }
-      if (inFlight === 0 && next >= queue.length && onQueueDone) {
-        onQueueDone();
-        onQueueDone = null; // guard against double-fire
-      }
-    }
-    pump();
+  if (video.readyState >= 1 /* HAVE_METADATA */) {
+    init();
+  } else {
+    video.addEventListener('loadedmetadata', init, { once: true });
   }
 
-  function startLoading() {
-    const mid = Math.round((FRAME_COUNT - 1) / 2);
-    const priority = [0, mid, FRAME_COUNT - 1];
-
-    const rest = [];
-    for (let i = 0; i < FRAME_COUNT; i++) {
-      if (priority.indexOf(i) === -1) rest.push(i);
-    }
-    rest.sort((a, b) => Math.abs(a - mid) - Math.abs(b - mid));
-
-    loadQueueWithConcurrency(priority, 3, () => {
-      // Wait two animation frames before the first paint. If the tab loaded
-      // in the background (a very common real-world case: a link opened
-      // from Instagram/WhatsApp/a group chat lands in an unfocused tab),
-      // window.innerWidth/innerHeight can briefly read 0 here, which bakes
-      // a wrong "mobile" offset and a blank canvas into the initial paint
-      // and — since resize only ever redraws the canvas, not the beats —
-      // that wrong state would otherwise never self-correct until the user
-      // scrolls. Two rAFs reliably land after the browser has committed a
-      // real layout for a now-visible tab.
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        resizeCanvas();
-        displayProgress = targetProgress = getTargetProgress();
-        wake();
-      }));
-      loadQueueWithConcurrency(rest, 6);
-    });
-
-    // Belt-and-suspenders for the same background-tab scenario: if the page
-    // was still hidden when the two rAFs above fired, re-run once the tab
-    // actually becomes visible, so the hero never gets permanently stuck on
-    // its (possibly wrong) first-paint state.
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        resizeCanvas();
-        wake();
-      }
-    });
-  }
-
-  startLoading();
+  // Belt-and-suspenders for the background-tab scenario: re-sync whenever
+  // the tab actually becomes visible.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') wake();
+  });
 })();

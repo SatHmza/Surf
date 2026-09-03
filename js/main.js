@@ -105,6 +105,32 @@
   })();
 
   /* ------------------------------------------------------------------ */
+  /* Ocean background video — the looping water footage behind the glass */
+  /* shell. Autoplay is handled by the muted/playsinline attributes; JS  */
+  /* only (a) freezes it on the poster frame under prefers-reduced-      */
+  /* motion, and (b) pauses it while the tab is hidden so a backgrounded */
+  /* tab isn't decoding 30fps video for nobody.                          */
+  /* ------------------------------------------------------------------ */
+  (function () {
+    var ocean = document.getElementById("oceanBg");
+    if (!ocean || typeof ocean.pause !== "function") return;
+    var noMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (noMotion) {
+      ocean.removeAttribute("autoplay");
+      ocean.pause();
+      return;
+    }
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") {
+        ocean.pause();
+      } else {
+        var p = ocean.play();
+        if (p && p.catch) p.catch(function () { /* autoplay veto — poster stays */ });
+      }
+    });
+  })();
+
+  /* ------------------------------------------------------------------ */
   /* Footer year                                                         */
   /* ------------------------------------------------------------------ */
   var yearEl = document.getElementById("year");
@@ -158,11 +184,11 @@
       });
     });
   }
-  staggerGroup(".service-grid", 90, 3);
-  staggerGroup(".gallery__grid", 70, 5);
-  staggerGroup(".about__facts", 100, 2);
-  staggerGroup(".stats__grid", 90, 3);
-  staggerGroup(".schedule__list", 110, 2);
+  staggerGroup(".service-grid", 110, 3);
+  staggerGroup(".gallery__grid", 90, 5);
+  staggerGroup(".about__facts", 120, 2);
+  staggerGroup(".stats__grid", 110, 3);
+  staggerGroup(".schedule__list", 130, 2);
 
   var motifRevealTargets = document.querySelectorAll(".reveal-scale");
   var allRevealTargets = Array.prototype.concat.call([], Array.prototype.slice.call(revealTargets), Array.prototype.slice.call(motifRevealTargets));
@@ -252,65 +278,48 @@
   }
 
   /* ------------------------------------------------------------------ */
-  /* Testimonials carousel — the viewport (css/style.css) is the actual   */
-  /* horizontally-scrolling element with scroll-snap, so touch/trackpad   */
-  /* drag and native keyboard scrolling already work on their own. These  */
-  /* prev/next buttons just nudge scrollLeft by one card's width (card +  */
-  /* its flex gap), and their disabled state tracks how close the        */
-  /* viewport is to either end so you can't arrow past the last card.     */
+  /* Testimonials carousel — auto-looping ticker (no arrows). The 3 real */
+  /* cards are cloned once (clones aria-hidden) so the track holds two   */
+  /* identical sets; the shared rAF loop below (same one that drives the */
+  /* WaveTicker motion) advances scrollLeft continuously and wraps it by */
+  /* exactly one set's width at the seam — the two positions are pixel-  */
+  /* identical, so the loop never visibly jumps. Auto-advance pauses on  */
+  /* hover, during a drag, and for a few seconds after a touch; mouse    */
+  /* drag panning is kept from the old carousel. Under reduced motion    */
+  /* none of this runs — no clones, no auto-scroll, native scrolling.    */
   /* ------------------------------------------------------------------ */
   (function () {
     var viewport = document.getElementById("testimonialsViewport");
     var track = viewport ? viewport.querySelector(".testimonials__track") : null;
-    var prevBtn = document.getElementById("testimonialsPrev");
-    var nextBtn = document.getElementById("testimonialsNext");
-    if (!viewport || !track || !prevBtn || !nextBtn) return;
+    if (!viewport || !track) return;
+    var carouselReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    function cardStep() {
-      var card = track.querySelector(".testimonial-card");
-      if (!card) return viewport.clientWidth;
-      var gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || "0") || 0;
-      return card.getBoundingClientRect().width + gap;
+    if (!carouselReduced) {
+      Array.prototype.slice.call(track.querySelectorAll(".testimonial-card")).forEach(function (card) {
+        var clone = card.cloneNode(true);
+        clone.setAttribute("aria-hidden", "true");
+        track.appendChild(clone);
+      });
     }
 
-    function updateArrowState() {
-      var max = track.scrollWidth - viewport.clientWidth;
-      var pos = viewport.scrollLeft;
-      var atStart = pos <= 2;
-      var atEnd = pos >= max - 2;
-      prevBtn.disabled = atStart;
-      nextBtn.disabled = max <= 2 ? true : atEnd;
+    function trackGap() {
+      return parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || "0") || 0;
+    }
+    // Width of ONE set of cards including the gap that follows it — the
+    // scrollLeft distance at which the second set sits exactly where the
+    // first one started (track.scrollWidth spans padding + both sets).
+    function wrapWidth() {
+      var cs = getComputedStyle(track);
+      var pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      return (track.scrollWidth - pad + trackGap()) / 2;
     }
 
-    function scrollByCards(dir) {
-      viewport.scrollBy({ left: dir * cardStep(), behavior: "smooth" });
-    }
-
-    prevBtn.addEventListener("click", function () {
-      // A click right after a drag would otherwise also fire scrollByCards
-      // on top of wherever the drag left off; suppressClickAfterDrag guards
-      // against that (see the drag block below).
-      if (suppressClickAfterDrag) return;
-      scrollByCards(-1);
-    });
-    nextBtn.addEventListener("click", function () {
-      if (suppressClickAfterDrag) return;
-      scrollByCards(1);
-    });
-
-    var scrollTicking = false;
-    viewport.addEventListener(
-      "scroll",
-      function () {
-        if (!scrollTicking) {
-          requestAnimationFrame(function () { updateArrowState(); scrollTicking = false; });
-          scrollTicking = true;
-        }
-      },
-      { passive: true }
-    );
-    window.addEventListener("resize", updateArrowState);
-    updateArrowState();
+    var AUTO_SPEED = 30;      // auto-scroll, px per second
+    var autoPaused = false;   // desktop hover
+    var touchPauseUntil = 0;  // mobile: resume a beat after the finger leaves
+    viewport.addEventListener("mouseenter", function () { autoPaused = true; });
+    viewport.addEventListener("mouseleave", function () { autoPaused = false; });
+    viewport.addEventListener("touchstart", function () { touchPauseUntil = performance.now() + 3500; }, { passive: true });
 
     /* Click-and-drag with a mouse — overflow:auto only picks up touch and
        trackpad gestures natively, not a plain mouse click-drag, so desktop
@@ -321,12 +330,9 @@
     var isDragging = false;
     var dragStartX = 0;
     var dragStartScrollLeft = 0;
-    var dragMoved = false;
-    var suppressClickAfterDrag = false;
 
     viewport.addEventListener("mousedown", function (e) {
       isDragging = true;
-      dragMoved = false;
       dragStartX = e.pageX;
       dragStartScrollLeft = viewport.scrollLeft;
       viewport.classList.add("is-dragging");
@@ -335,7 +341,6 @@
     window.addEventListener("mousemove", function (e) {
       if (!isDragging) return;
       var delta = e.pageX - dragStartX;
-      if (Math.abs(delta) > 3) dragMoved = true;
       viewport.scrollLeft = dragStartScrollLeft - delta;
     });
 
@@ -343,12 +348,6 @@
       if (!isDragging) return;
       isDragging = false;
       viewport.classList.remove("is-dragging");
-      if (dragMoved) {
-        // Prevent the mouseup's own click (and, on the arrow buttons, its
-        // click handler) from also acting on this same gesture.
-        suppressClickAfterDrag = true;
-        window.setTimeout(function () { suppressClickAfterDrag = false; }, 50);
-      }
     }
     window.addEventListener("mouseup", endDrag);
     viewport.addEventListener("mouseleave", function () { if (isDragging) endDrag(); });
@@ -356,6 +355,92 @@
     // Dragging across card text would otherwise start a text-selection drag
     // instead of (or alongside) panning the carousel.
     viewport.addEventListener("dragstart", function (e) { e.preventDefault(); });
+
+    /* WaveTicker motion (native re-implementation of Framer's WaveTicker
+       module — the original is a Framer-only ESM, so the effect is built
+       here instead): every card rides a slow TRAVELING sine wave. Each
+       frame, a card's vertical offset and tilt derive from its current
+       on-screen X position (so dragging/arrow-scrolling moves it along
+       the wave shape) plus a time term (so even a resting row visibly
+       undulates, crests rolling left like swell passing underneath).
+       Tilt = cos (the wave's slope), so cards lean into the roll rather
+       than staying rigidly upright. The rAF loop only runs while the
+       carousel is actually on screen, and not under reduced motion. */
+    // Includes the clones — they ride the same wave (their phase comes
+    // from on-screen X, so the wave stays continuous across the seam).
+    var waveCards = Array.prototype.slice.call(track.querySelectorAll(".testimonial-card"));
+    if (waveCards.length && !carouselReduced) {
+      var WAVE_AMP = 10;       // px of rise/fall
+      var WAVE_LEN = 520;      // px between crests
+      var WAVE_SPEED = 0.0011; // phase advance per ms (direction: crests travel left)
+      var WAVE_TILT = 1.7;     // max degrees of lean, following the slope
+
+      var waveRunning = false;
+      var waveRaf = 0;
+      var waveInView = false;
+      var lastFrameTs = 0;
+
+      var waveFrame = function (now) {
+        if (!waveRunning) return;
+        var dt = lastFrameTs ? now - lastFrameTs : 16;
+        lastFrameTs = now;
+        if (dt > 120) dt = 16; // resumed after jank/tab switch — don't lurch
+
+        // ---- auto-loop advance + seam wrap (see block comment above) ----
+        if (!isDragging) {
+          if (!autoPaused && now > touchPauseUntil) {
+            viewport.scrollLeft += AUTO_SPEED * (dt / 1000);
+          }
+          var w = wrapWidth();
+          if (viewport.scrollLeft >= w) {
+            viewport.scrollLeft -= w;
+          } else if (viewport.scrollLeft < 1) {
+            // covers a user who dragged back to the hard left edge: jump
+            // forward one set (pixel-identical position) so there's
+            // always room to keep looping in both directions
+            viewport.scrollLeft += w;
+          }
+        }
+
+        var originLeft = viewport.getBoundingClientRect().left;
+        waveCards.forEach(function (card) {
+          var r = card.getBoundingClientRect();
+          var x = r.left + r.width / 2 - originLeft;
+          var phase = (x / WAVE_LEN) * Math.PI * 2 - now * WAVE_SPEED;
+          var y = Math.sin(phase) * WAVE_AMP;
+          var tilt = Math.cos(phase) * WAVE_TILT;
+          card.style.transform = "translateY(" + y.toFixed(2) + "px) rotate(" + tilt.toFixed(2) + "deg)";
+        });
+        waveRaf = requestAnimationFrame(waveFrame);
+      };
+
+      var setWave = function (on) {
+        if (on && !waveRunning) {
+          waveRunning = true;
+          lastFrameTs = 0; // fresh dt after a pause — no catch-up jump
+          waveRaf = requestAnimationFrame(waveFrame);
+        } else if (!on && waveRunning) {
+          waveRunning = false;
+          cancelAnimationFrame(waveRaf);
+        }
+      };
+
+      if ("IntersectionObserver" in window) {
+        var waveIo = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            waveInView = entry.isIntersecting;
+            setWave(waveInView && document.visibilityState !== "hidden");
+          });
+        }, { threshold: 0 });
+        waveIo.observe(viewport);
+      } else {
+        waveInView = true;
+        setWave(true);
+      }
+      document.addEventListener("visibilitychange", function () {
+        setWave(waveInView && document.visibilityState === "visible");
+      });
+    }
   })();
 
   /* Hero scroll-scrubbed frame sequence now lives in js/hero-scroll.js */

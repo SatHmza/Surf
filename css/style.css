@@ -28,6 +28,9 @@
      can be dropped into rgba() at whatever alpha each gradient stop needs. */
   --ocean-1: 46,110,168;
   --ocean-2: 30,80,140;
+  /* Light cyan pulled from the saturated background video's palette —
+     used by the hero's superposition tint (.hero-tint). */
+  --cyan: 108,216,228;
 
   --font-display: "Playfair Display", "Georgia", serif;
   --font-body: "Inter", system-ui, -apple-system, sans-serif;
@@ -47,6 +50,8 @@
 
 *, *::before, *::after{ box-sizing: border-box; }
 html{ scroll-behavior: smooth; }
+/* anchor jumps land clear of the fixed pill nav instead of underneath it */
+[id]{ scroll-margin-top: 6rem; }
 @media (prefers-reduced-motion: reduce){
   html{ scroll-behavior: auto; }
   *, *::before, *::after{ animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
@@ -72,6 +77,75 @@ ul{ margin: 0; padding: 0; list-style: none; }
   max-width: var(--container);
   margin-inline: auto;
   padding-inline: var(--pad-inline);
+}
+
+/* ==========================================================================
+   Ocean background + glass content shell.
+   #oceanBg is a fixed, full-viewport looping water video
+   (assets/video/ocean-loop.mp4, 720p re-encode of the source 4K loop —
+   see KNOWLEDGE.md). All page content lives in #main, which floats over
+   it as one frosted-glass pane: backdrop-filter blurs the LIVE video
+   behind it, and the pane keeps generous left/right margins so raw,
+   unblurred ocean stays visible down both sides. The edge treatment
+   (bright 2px top hairline, dimmer left, brighter right) mimics light
+   hitting a real glass slab.
+
+   Gotcha: the hero inside #main relies on position: sticky, and
+   overflow: hidden on an ancestor silently breaks sticky — overflow: clip
+   does NOT (it never creates a scroll container), which is why clip is
+   used to round-clip the pane's corners.
+
+   Section backgrounds throughout this file were changed from opaque
+   --black / --near-black to transparent / low-alpha tints for the same
+   reason: an opaque section would hide the frosted ocean entirely.
+   ========================================================================== */
+#oceanBg{
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  z-index: 0;
+  /* 200% saturation on the video itself (not just the glass backdrop) so
+     the raw ocean in the margins pops the same as the frosted area */
+  filter: saturate(2);
+  /* poster/video both cover; black shows only for the instant before the
+     poster decodes */
+  background: var(--black);
+}
+#main{
+  position: relative;
+  z-index: 1;
+  /* Negative top margin pulls the glass pane UP over the hero's final
+     75vh of scroll, so it slides across the dissolving video instead of
+     waiting below it — killing the stretch of empty ocean that used to
+     sit between the hero's end and the first content. Bonus: the pane's
+     backdrop-filter frosts the fading hero as it passes over, so the
+     handoff reads hero → frosted hero → content in one motion. (The
+     hero's exit dissolve in js/hero-scroll.js runs 0.85→1.0; the pane
+     enters at progress ≈ 0.79 with this value.) */
+  margin-top: -75vh;
+  margin-bottom: clamp(.75rem, 2vw, 1.5rem);
+  margin-inline: clamp(1.25rem, 6.5vw, 6rem);
+  background: rgba(5, 10, 17, .48);
+  /* light 5px frost — the video is already saturated 2x via its own
+     filter above, so no extra saturate() here (it would compound) */
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  border-top: 2px solid rgba(225,225,225, .2);
+  border-left: 1px solid rgba(225,225,225, .1);
+  border-right: 1px solid rgba(225,225,225, .3);
+  border-bottom: 1px solid rgba(225,225,225, .08);
+  border-radius: 18px;
+  overflow: clip;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, .3);
+}
+/* No backdrop-filter support (or overflow: clip missing alongside it in
+   the same legacy engines): fall back to a near-opaque pane so text
+   never sits on raw animated water. */
+@supports not (backdrop-filter: blur(1px)){
+  #main{ background: rgba(5, 10, 17, .93); }
 }
 
 /* ==========================================================================
@@ -404,25 +478,48 @@ body.intro-active{ overflow: hidden; }
 
 /* ==========================================================================
    Hero — scroll-scrubbed frame sequence, pinned inside the hero only
-   (see js/hero-scroll.js). Mechanic unchanged; only colors/typography
-   below were restyled to the black/serif system.
+   (see js/hero-scroll.js). Lives OUTSIDE #main in the DOM (the glass
+   pane's overflow: clip would clip any negative-margin breakout), so it
+   is the one full-bleed section that runs past the glass margins.
+   z-index: 1 lifts it above the fixed #oceanBg video (z-index: 0).
    ========================================================================== */
-.hero-scroll-wrapper{ position: relative; height: 460vh; background: var(--black); }
+.hero-scroll-wrapper{ position: relative; z-index: 1; height: 460vh; background: transparent; }
 .hero-sticky{ position: sticky; top: 0; height: 100vh; overflow: hidden; }
-#heroCanvas{
+#heroVideo{
   position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  object-fit: cover;
   transform-origin: center center;
   will-change: transform;
 }
 @media (prefers-reduced-motion: reduce){
-  #heroCanvas{ transform: none !important; }
+  #heroVideo{ transform: none !important; }
 }
+/* The exit dissolve (js/hero-scroll.js) drives this element's opacity
+   over the last ~15% of the hero scroll — fading the whole pinned hero
+   out to the live ocean video behind it, instead of the old full-white
+   overlay that just sat frozen on screen. */
+.hero-sticky{ will-change: opacity; }
 
 .hero-vignette{
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
     linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.75) 100%),
     radial-gradient(120% 75% at 50% 100%, rgba(0,0,0,.55), transparent 62%);
+}
+
+/* Cyan superposition layer over the raw POV footage — pushes it toward
+   the same light-blue/cyan palette as the saturated ocean background so
+   the full-bleed hero and the glass sections read as one system.
+   overlay blend keeps the footage's contrast while shifting its hue;
+   the plain low-alpha wash underneath still tints in the rare engine
+   without blend support. Sits above canvas + vignette (z-index: 1,
+   later in DOM), below beat text / CTA / rail (z-index: 2). */
+.hero-tint{
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(var(--cyan), .42) 0%, rgba(var(--ocean-1), .38) 100%),
+    rgba(var(--cyan), .08);
+  mix-blend-mode: overlay;
 }
 
 .hero-beat{
@@ -600,29 +697,27 @@ body.intro-active{ overflow: hidden; }
   .hero-scroll-cue__line{ animation: none; }
 }
 
-.whiteout-overlay{
-  position: absolute; inset: 0; background: #fff; opacity: 0;
-  pointer-events: none; z-index: 3;
-}
 
 /* ==========================================================================
    Reveal-on-scroll (shared utility)
    ========================================================================== */
 .reveal{
   opacity: 0;
-  transform: translateY(22px);
-  transition: opacity .7s var(--ease), transform .7s var(--ease);
+  /* slight scale alongside the rise: elements settle into place rather
+     than sliding in on a rail — reads organic instead of mechanical */
+  transform: translateY(30px) scale(.985);
+  transition: opacity 1s var(--ease), transform 1s var(--ease);
   transition-delay: var(--reveal-delay, 0s);
 }
-.reveal.is-visible{ opacity: 1; transform: translateY(0); }
+.reveal.is-visible{ opacity: 1; transform: translateY(0) scale(1); }
 @media (prefers-reduced-motion: reduce){
   .reveal{ opacity: 1; transform: none; }
 }
 
 .reveal-scale{
   opacity: 0;
-  transform: scale(.9);
-  transition: opacity .6s var(--ease), transform .6s var(--ease);
+  transform: scale(.88);
+  transition: opacity .9s var(--ease), transform .9s var(--ease);
 }
 .reveal-scale.is-visible{ opacity: 1; transform: scale(1); }
 @media (prefers-reduced-motion: reduce){
@@ -725,7 +820,7 @@ body.intro-active{ overflow: hidden; }
    ========================================================================== */
 .marquee-strip{
   padding-block: clamp(2.5rem, 6vw, 4rem);
-  background: var(--black);
+  background: transparent;
   border-top: 1px solid var(--line-soft);
   border-bottom: 1px solid var(--line-soft);
   overflow: hidden;
@@ -767,7 +862,7 @@ body.intro-active{ overflow: hidden; }
 /* ==========================================================================
    About
    ========================================================================== */
-.about{ padding-block: var(--gap-section); background: var(--black); }
+.about{ padding-block: var(--gap-section); background: transparent; }
 .about__grid{
   display: grid;
   gap: 2.5rem;
@@ -828,7 +923,7 @@ body.intro-active{ overflow: hidden; }
    zorge9.estate. Big bronze serif time markers paired with short prose,
    thin hairline separating each row.
    ========================================================================== */
-.schedule{ padding-block: var(--gap-section); background: var(--black); }
+.schedule{ padding-block: var(--gap-section); background: transparent; }
 .schedule__list{
   display: flex;
   flex-direction: column;
@@ -868,7 +963,9 @@ body.intro-active{ overflow: hidden; }
    Gallery — dense photo masonry (CSS columns), standing in for the
    reference site's member-portrait grid.
    ========================================================================== */
-.gallery{ padding-block: var(--gap-section); background: var(--near-black); }
+/* the former --near-black sections keep their "darker band" rhythm as a
+   low-alpha tint over the glass instead of an opaque surface */
+.gallery{ padding-block: var(--gap-section); background: rgba(2, 6, 12, .35); }
 .gallery__grid{
   column-count: 2;
   column-gap: .8rem;
@@ -890,33 +987,27 @@ body.intro-active{ overflow: hidden; }
 }
 
 /* ==========================================================================
-   Testimonials — a discrete, user-driven carousel (real Google reviews).
-   The viewport is the actual scroll container (native touch/trackpad drag
-   works for free); the prev/next buttons just nudge scrollLeft by one
-   card's width via JS. scroll-snap keeps a card always settling flush
-   against the edge instead of stopping half-scrolled.
+   Testimonials — auto-looping ticker of frosted-glass cards (real Google
+   reviews) riding the WaveTicker swell (js/main.js). The viewport is a
+   real scroll container, so touch/trackpad panning still works and mouse
+   drag is handled in JS; auto-advance pauses on hover/drag/touch and the
+   cloned second card set makes the loop seamless.
    ========================================================================== */
 .testimonials{
   padding-block: var(--gap-section);
-  background: var(--black);
+  background: transparent;
 }
 .testimonials__viewport{
-  /* Capped narrower than the 3 cards' combined width on purpose: with only
-     3 real reviews (no more looping duplicates now that it's a discrete
-     carousel), a full-bleed edge-to-edge viewport on a normal-or-wider
-     desktop screen was actually WIDE ENOUGH to show all 3 cards at once —
-     so there was nothing left to overflow, which is why it looked frozen
-     and wouldn't pan with the mouse or the arrows at all. Keeping the
-     viewport narrower than the total card width guarantees there's always
-     a card sitting off-screen to scroll to, at every screen size, and it
-     doubles as a visual cue (a card peeking off the edge) that there's
-     more to see. */
+  /* Kept narrower than the track on purpose: a card peeking off each
+     masked edge reads as "this keeps going", which suits the auto-loop.
+     NO scroll-snap and NO scroll-behavior: smooth here — both would
+     fight the per-frame scrollLeft advance of the auto-loop ticker in
+     js/main.js (smooth behavior animates every programmatic assignment,
+     snap yanks the settled position off the wrap seam). */
   max-width: min(100%, 60rem);
   margin-inline: auto;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
   scrollbar-width: none;
   -ms-overflow-style: none;
   cursor: grab;
@@ -926,12 +1017,10 @@ body.intro-active{ overflow: hidden; }
 /* While a mouse drag is in progress (see js/main.js): a plain overflow
    container doesn't support click-and-drag panning on desktop out of the
    box (only touch/trackpad), so JS handles it manually and toggles this
-   class for the grabbing cursor + to stop text/cards being selected and
-   scroll-snap from fighting the drag mid-motion. */
+   class for the grabbing cursor + to stop text/cards being selected
+   mid-drag. */
 .testimonials__viewport.is-dragging{
   cursor: grabbing;
-  scroll-snap-type: none;
-  scroll-behavior: auto;
   user-select: none;
 }
 .testimonials__viewport::-webkit-scrollbar{ display: none; }
@@ -940,15 +1029,27 @@ body.intro-active{ overflow: hidden; }
   gap: 1.25rem;
   width: max-content;
   padding-inline: var(--pad-inline);
+  /* vertical headroom for the WaveTicker bob (±10px + tilt, see
+     js/main.js) so cards never clip against the viewport's edges */
+  padding-block: 1.75rem;
 }
 .testimonial-card{
   width: min(340px, 82vw);
   flex-shrink: 0;
-  scroll-snap-align: start;
-  background: var(--charcoal);
-  border: 1px solid var(--line-soft);
+  /* Frosted glass, deeper than the page pane's 5px: translucent tint +
+     16px backdrop blur sampling the pane, ocean glow and video behind.
+     Same glass edge-lighting language as #main (brighter top hairline). */
+  background: rgba(20, 26, 34, .38);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255,255,255,.14);
+  border-top-color: rgba(255,255,255,.28);
   border-radius: var(--radius-card);
   padding: 1.75rem 1.6rem;
+  will-change: transform;
+}
+@supports not (backdrop-filter: blur(1px)){
+  .testimonial-card{ background: var(--charcoal); }
 }
 .testimonial-card__avatar{
   display: inline-flex;
@@ -984,35 +1085,11 @@ body.intro-active{ overflow: hidden; }
   text-align: center;
   margin-top: 0;
 }
-.testimonials__arrow{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--line-soft);
-  background: var(--charcoal);
-  color: var(--white);
-  cursor: pointer;
-  transition: background var(--ease-fast, .2s ease), border-color var(--ease-fast, .2s ease), transform .2s ease;
-}
-.testimonials__arrow:hover{ background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3); }
-.testimonials__arrow:active{ transform: scale(.92); }
-.testimonials__arrow:disabled{ opacity: .35; cursor: default; pointer-events: none; }
-@media (max-width: 560px){
-  .testimonials__controls{ gap: 1rem; }
-}
-@media (prefers-reduced-motion: reduce){
-  .testimonials__viewport{ scroll-behavior: auto; }
-  .testimonials__arrow{ transition: none; }
-}
 
 /* ==========================================================================
    Location
    ========================================================================== */
-.location{ position: relative; padding-block: var(--gap-section); background: var(--near-black); }
+.location{ position: relative; padding-block: var(--gap-section); background: rgba(2, 6, 12, .35); }
 .location__grid{
   display: grid;
   gap: 2.5rem;
@@ -1071,7 +1148,7 @@ body.intro-active{ overflow: hidden; }
    By the numbers — stat row, standing in for the reference site's stats
    section.
    ========================================================================== */
-.stats{ padding-block: var(--gap-section); background: var(--black); text-align: center; }
+.stats{ padding-block: var(--gap-section); background: transparent; text-align: center; }
 .stats__heading{
   font-size: clamp(1.9rem, 4vw, 2.75rem);
   font-weight: 500;
@@ -1115,7 +1192,7 @@ body.intro-active{ overflow: hidden; }
    Lessons & services — staggered offset photo grid with overlaid caption,
    standing in for the reference site's "special guests" layout.
    ========================================================================== */
-.lessons{ padding-block: var(--gap-section); background: var(--near-black); }
+.lessons{ padding-block: var(--gap-section); background: rgba(2, 6, 12, .35); }
 .service-grid{
   display: grid;
   gap: 3rem 1.5rem;
@@ -1133,6 +1210,15 @@ body.intro-active{ overflow: hidden; }
   width: 100%; height: 100%;
   object-fit: cover;
   filter: saturate(.9);
+  /* slow settle-out zoom on hover (the card is overflow: hidden, so the
+     image grows inside its frame). On the img, not the card — the card
+     itself is a .reveal target whose transition-delay would lag a hover. */
+  transition: transform .9s var(--ease);
+}
+.service-card:hover img{ transform: scale(1.05); }
+@media (prefers-reduced-motion: reduce){
+  .service-card img{ transition: none; }
+  .service-card:hover img{ transform: none; }
 }
 .service-card::after{
   content: "";
@@ -1186,6 +1272,17 @@ body.intro-active{ overflow: hidden; }
   position: absolute; inset: 0;
   background: linear-gradient(to bottom, rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,.75));
 }
+/* Same cyan superposition treatment as the hero's .hero-tint: pushes the
+   sunset photo toward the site's cyan/ocean palette. Lives on the scrim's
+   ::after (no extra markup); overlay blend keeps the photo's contrast. */
+.quote__scrim::after{
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(var(--cyan), .42) 0%, rgba(var(--ocean-1), .38) 100%),
+    rgba(var(--cyan), .08);
+  mix-blend-mode: overlay;
+}
 .quote__inner{
   position: relative;
   z-index: 1;
@@ -1208,7 +1305,7 @@ body.intro-active{ overflow: hidden; }
    ========================================================================== */
 .cta-footer{
   position: relative;
-  background: var(--black);
+  background: transparent;
   padding-block: var(--gap-section) 4rem;
 }
 .cta-footer__grid{
@@ -1262,7 +1359,7 @@ body.intro-active{ overflow: hidden; }
    ========================================================================== */
 .site-footer{
   position: relative;
-  background: var(--black);
+  background: transparent;
   border-top: 1px solid var(--line-soft);
   padding-top: clamp(3rem, 7vw, 5rem);
   overflow: hidden;
@@ -1310,4 +1407,58 @@ body.intro-active{ overflow: hidden; }
 @media (min-width: 720px){
   .site-footer__top{ flex-direction: row; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; }
   .site-footer__copy{ width: 100%; order: 4; }
+}
+
+/* ==========================================================================
+   Depth pass — shadows on everything. With the glass blur down to 5px the
+   live video shows through much more clearly, so every element gets lift
+   off the background:
+   - text-shadow is an INHERITED property, so one declaration on body
+     covers every piece of text on the page; headings get a heavier one.
+   - every inline SVG (icons, motifs, stars, logos) gets a drop-shadow,
+     which follows the actual strokes rather than the bounding box.
+   - images, cards and controls get box shadows.
+   Exceptions below: dark text sitting ON white surfaces (white pill
+   buttons, the skip link, form fields) where a dark glow reads as smeared
+   ink, not depth. This section sits last in the file ON PURPOSE — it must
+   win the cascade over each component's own earlier rules.
+   ========================================================================== */
+body{
+  text-shadow: 0 1px 2px rgba(0,0,0,.55), 0 6px 18px rgba(0,0,0,.35);
+}
+h1, h2, h3, .stat__value, .schedule__time, .intro__wordmark{
+  text-shadow: 0 2px 4px rgba(0,0,0,.5), 0 12px 32px rgba(0,0,0,.45);
+}
+/* dark-on-light surfaces: no text glow */
+.btn--pill, .skip-link,
+.form-row input, .form-row textarea{
+  text-shadow: none;
+}
+/* the watermark is transparent-fill outline type — a shadow of the full
+   glyph shape behind it reads as grime, not depth */
+.site-footer__watermark{ text-shadow: none; }
+
+svg{
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,.45));
+}
+/* black glyphs inside white pills don't need (or want) a dark halo */
+.btn--pill svg{ filter: none; }
+
+.gallery__img{
+  box-shadow: var(--shadow-card);
+}
+.testimonial-card,
+.footer__form{
+  box-shadow: var(--shadow-card);
+}
+.btn--outline,
+.nav-toggle,
+.site-footer__social a{
+  box-shadow: 0 8px 20px -8px rgba(0,0,0,.55);
+}
+.schedule__row,
+.location__details{
+  /* hairline-divided rows can't take a box shadow without looking like
+     floating slabs; a soft drop-shadow on the whole block instead */
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,.25));
 }
