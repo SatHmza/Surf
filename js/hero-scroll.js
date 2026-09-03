@@ -29,18 +29,26 @@
   video.load();
 
   // MOBILE FIX: a video that only ever gets scrubbed via currentTime (never
-  // actually played) is exactly the case iOS Safari — and, more loosely,
-  // Chrome on Android — refuse to buffer past the poster frame for.
-  // preload="auto" is advisory only; without an actual play() call these
-  // browsers treat the video as "not really needed yet" and never fetch
-  // beyond metadata, especially off wifi. That reads as "the hero doesn't
-  // load" on a phone while working fine on desktop. The fix: kick off a
-  // real play() (allowed without a user gesture because the video is
-  // muted + playsinline) and pause it again immediately — this forces the
-  // real decode/buffer pipeline to spin up with no visible playback, since
-  // it's paused again before the next paint and currentTime is still ~0.
-  // Retried on the user's first touch/scroll too, in case Low Power Mode
-  // or a strict data-saver setting vetoed the very first silent attempt.
+  // actually played) is exactly the case mobile browsers refuse to buffer
+  // past the poster frame for — preload="auto" is advisory only, and
+  // without a real play() they treat it as "not really needed yet" and
+  // never fetch beyond metadata. iOS/WebKit is stricter still: it only
+  // grants the "silent autoplay, no gesture needed" allowance to a video
+  // whose `autoplay` attribute was present in the markup (see index.html) —
+  // a script-triggered play() with no user gesture can be vetoed even when
+  // muted+playsinline, which is why this can work in a Chrome/Android test
+  // and still show nothing on a real iPhone. Two layers here: the markup
+  // attribute does the real work on iOS, and this 'play' listener slams it
+  // straight back to paused the instant ANYTHING starts it playing —
+  // native autoplay, primeBuffering() below, anything — so nothing is ever
+  // actually visible; hero-scroll.js owns currentTime entirely via scroll.
+  video.addEventListener('play', function () { video.pause(); });
+
+  // Fallback for browsers that don't extend the autoplay attribute's
+  // allowance to a src assigned later via JS: an explicit play()-then-
+  // pause(), retried on the user's first touch/scroll in case Low Power
+  // Mode or a strict data-saver setting vetoed the very first silent
+  // attempt.
   var primed = false;
   function primeBuffering() {
     if (primed) return;

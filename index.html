@@ -130,7 +130,14 @@
            device-pixel width, so phones don't download desktop bitrate.
            Poster is the ride's first frame at 1920px so the hero paints
            sharp before any video loads. -->
-      <video id="heroVideo" muted playsinline preload="auto"
+      <!-- autoplay is required here, not optional: iOS/WebKit only grants
+           the "silent autoplay, no gesture needed" allowance to a video
+           whose autoplay attribute was present in the markup — a video.play()
+           call from JS later, with no user gesture, can still be vetoed even
+           when muted+playsinline. js/hero-scroll.js pauses it again the
+           instant it starts, so nothing actually plays; this attribute only
+           exists to unlock real buffering on iOS. See js/hero-scroll.js. -->
+      <video id="heroVideo" muted playsinline autoplay preload="auto"
              poster="assets/hero/hero-poster.webp" aria-hidden="true" tabindex="-1"
              data-src-hd="assets/hero/hero-scrub-1080.mp4"
              data-src-sd="assets/hero/hero-scrub.mp4"></video>
