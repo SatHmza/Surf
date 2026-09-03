@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rabat Surf Club — Surf Lessons at Oudaya Beach</title>
 <meta name="description" content="Private and group surf lessons, board and wetsuit rental at Oudaya Beach, Rabat. All levels welcome. Book a session on WhatsApp.">
 <meta name="theme-color" content="#000000">
@@ -36,14 +36,17 @@
 
 <!-- Ocean background — a real looping water video, fixed behind
      everything; the glass content shell (#main, see css/style.css)
-     backdrop-blurs whatever it plays. muted + playsinline are what allow
-     autoplay on mobile; the poster is its own first frame so something
-     paints instantly while the video streams in. Paused under
-     prefers-reduced-motion and in hidden tabs (see js/main.js). -->
-<video id="oceanBg" autoplay muted loop playsinline preload="auto"
-       poster="assets/video/ocean-poster.jpg" aria-hidden="true" tabindex="-1">
-  <source src="assets/video/ocean-loop.mp4" type="video/mp4">
-</video>
+     backdrop-blurs whatever it plays. No <source> and no autoplay/preload
+     here on purpose (same pattern as #heroVideo's data-src-hd/sd below):
+     js/main.js decides whether this ever downloads at all. On a phone,
+     small screen, coarse pointer, reduced motion, or a slow/data-saver
+     connection, it never gets a src — the poster (a real frame of the
+     loop) just sits there as a static image, which skips ~13.5MB of
+     download plus the ongoing cost of decoding + blur-compositing a
+     playing video for the entire time someone is on the page. -->
+<video id="oceanBg" muted loop playsinline aria-hidden="true" tabindex="-1"
+       poster="assets/video/ocean-poster.jpg"
+       data-src="assets/video/ocean-loop.mp4"></video>
 
 <!-- INTRO — full-screen loader borrowed from monarque-evenements.com: each
      letter of the wordmark appears on its own (staggered via --i on every

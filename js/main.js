@@ -106,20 +106,36 @@
 
   /* ------------------------------------------------------------------ */
   /* Ocean background video — the looping water footage behind the glass */
-  /* shell. Autoplay is handled by the muted/playsinline attributes; JS  */
-  /* only (a) freezes it on the poster frame under prefers-reduced-      */
-  /* motion, and (b) pauses it while the tab is hidden so a backgrounded */
-  /* tab isn't decoding 30fps video for nobody.                          */
+  /* shell. This is the single biggest mobile cost on the page: a fixed  */
+  /* full-viewport video, decoded continuously, sampled by multiple      */
+  /* backdrop-filter blurs on top of it (#main, .testimonial-card, the   */
+  /* nav pill) — on a phone GPU that combination is what actually tanks  */
+  /* scroll framerate and burns battery, not any single element alone.   */
+  /* So on a phone / small screen / touch device / reduced motion / a    */
+  /* slow or data-saver connection, it never loads at all — the video    */
+  /* has no src (see index.html), so its poster (a real frame of the     */
+  /* loop) just sits there as a static image. Visually near-identical    */
+  /* behind frosted glass; costs nothing to decode or composite.         */
   /* ------------------------------------------------------------------ */
   (function () {
     var ocean = document.getElementById("oceanBg");
     if (!ocean || typeof ocean.pause !== "function") return;
+
     var noMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (noMotion) {
-      ocean.removeAttribute("autoplay");
-      ocean.pause();
-      return;
+    var isSmallOrTouch = window.matchMedia &&
+      (window.matchMedia("(max-width: 900px)").matches || window.matchMedia("(pointer: coarse)").matches);
+    var conn = navigator.connection || navigator.webkitConnection || navigator.mozConnection;
+    var isConstrainedConnection = !!(conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || "")));
+
+    if (noMotion || isSmallOrTouch || isConstrainedConnection) {
+      return; // leave it exactly as authored: no src, poster frame only
     }
+
+    ocean.src = ocean.dataset.src;
+    ocean.preload = "auto";
+    var playPromise = ocean.play(); // kick off; autoplay veto just leaves the poster
+    if (playPromise && playPromise.catch) playPromise.catch(function () {});
+
     document.addEventListener("visibilitychange", function () {
       if (document.visibilityState === "hidden") {
         ocean.pause();

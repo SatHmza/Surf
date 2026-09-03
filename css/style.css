@@ -126,6 +126,13 @@ ul{ margin: 0; padding: 0; list-style: none; }
      hero's exit dissolve in js/hero-scroll.js runs 0.85→1.0; the pane
      enters at progress ≈ 0.79 with this value.) */
   margin-top: -75vh;
+  /* dvh is the "actual visible area right now" — on mobile Safari/Chrome,
+     plain vh is measured with the address bar hidden, so a fixed -75vh
+     margin can be a bit too aggressive (or too little) as that bar shows
+     and hides while scrolling, showing up as a jump or a gap. Browsers
+     that don't know dvh just ignore this line and keep the vh value
+     above; this only overrides it where dvh is actually supported. */
+  margin-top: -75dvh;
   margin-bottom: clamp(.75rem, 2vw, 1.5rem);
   margin-inline: clamp(1.25rem, 6.5vw, 6rem);
   background: rgba(5, 10, 17, .48);
@@ -363,7 +370,13 @@ body.intro-active{ overflow: hidden; }
   z-index: 100;
   display: flex;
   justify-content: center;
-  padding: clamp(.85rem, 3vw, 1.5rem) var(--pad-inline) 0;
+  /* env(safe-area-inset-top) is 0 on virtually all phones in portrait (the
+     status bar isn't part of the "unsafe" inset there), but it's what
+     keeps this floating pill clear of the notch/camera cutout in
+     landscape, and of any browser UI in a fullscreen/PWA context. Needs
+     viewport-fit=cover in the <meta viewport> tag (see index.html) to be
+     non-zero at all; a no-op everywhere else. */
+  padding: calc(clamp(.85rem, 3vw, 1.5rem) + env(safe-area-inset-top)) var(--pad-inline) 0;
   pointer-events: none;
   opacity: 0;
   transition: opacity .45s var(--ease);
@@ -427,7 +440,10 @@ body.intro-active{ overflow: hidden; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px; height: 38px;
+  /* 44px, not 38px: this is a mobile-only control (hidden ≥900px below),
+     and 44px is the standard comfortable minimum touch-target size —
+     38px is a bit tight to hit reliably with a thumb. */
+  width: 44px; height: 44px;
   border-radius: var(--radius-pill);
   border: 1.5px solid var(--line);
   background: transparent;
@@ -450,7 +466,12 @@ body.intro-active{ overflow: hidden; }
     position: fixed;
     inset: 72px var(--pad-inline) auto auto;
     background: rgba(18,18,18,.92);
-    backdrop-filter: blur(16px);
+    /* Only ever rendered while the drawer is actually open (a transient,
+       user-triggered state, unlike the always-on nav pill/glass pane), so
+       a lighter blur here is mostly for consistency rather than a real
+       hotspot — but no reason to pay more than needed even briefly. */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--line-soft);
     border-radius: var(--radius-card);
     flex-direction: column;
@@ -484,7 +505,16 @@ body.intro-active{ overflow: hidden; }
    z-index: 1 lifts it above the fixed #oceanBg video (z-index: 0).
    ========================================================================== */
 .hero-scroll-wrapper{ position: relative; z-index: 1; height: 460vh; background: transparent; }
-.hero-sticky{ position: sticky; top: 0; height: 100vh; overflow: hidden; }
+/* A phone flick-scrolls in short bursts, not one long wheel roll — 460vh
+   of scroll distance just to get through the hero reads as a slog on a
+   small screen. hero-scroll.js computes the beat progress as a FRACTION
+   of this wrapper's own height, so shortening it here doesn't touch any
+   JS or timing — it just means less physical scrolling to see the same
+   four beats. */
+@media (max-width: 640px){
+  .hero-scroll-wrapper{ height: 340vh; }
+}
+.hero-sticky{ position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden; }
 #heroVideo{
   position: absolute; inset: 0; width: 100%; height: 100%; display: block;
   object-fit: cover;
@@ -767,8 +797,12 @@ body.intro-active{ overflow: hidden; }
    ========================================================================== */
 .floating-cta{
   position: fixed;
-  right: clamp(1rem, 4vw, 1.75rem);
-  bottom: clamp(1rem, 4vw, 1.75rem);
+  /* + env(safe-area-inset-*): keeps this clear of the home-indicator bar
+     and any rounded-corner/notch inset on the sides, instead of sitting
+     half-under it. env() is 0 on non-notched devices, so this is exactly
+     the same position everywhere else. */
+  right: calc(clamp(1rem, 4vw, 1.75rem) + env(safe-area-inset-right));
+  bottom: calc(clamp(1rem, 4vw, 1.75rem) + env(safe-area-inset-bottom));
   z-index: 90;
   display: flex;
   align-items: center;
@@ -1342,7 +1376,10 @@ body.intro-active{ overflow: hidden; }
   border-radius: var(--radius-input);
   padding: .7rem .85rem;
   font-family: var(--font-body);
-  font-size: .95rem;
+  /* 1rem/16px, not .95rem/15.2px: iOS Safari auto-zooms the whole page on
+     focus for any input under 16px, which on a form this short reads as a
+     jarring jolt rather than a helpful zoom. 16px sidesteps it entirely. */
+  font-size: 1rem;
   color: var(--white);
   resize: vertical;
 }
@@ -1461,4 +1498,44 @@ svg{
   /* hairline-divided rows can't take a box shadow without looking like
      floating slabs; a soft drop-shadow on the whole block instead */
   filter: drop-shadow(0 8px 24px rgba(0,0,0,.25));
+}
+
+/* ==========================================================================
+   Mobile performance pass. backdrop-filter is the single most expensive
+   thing a phone GPU does in CSS — its cost scales with both the blur
+   radius AND the area being blurred, and this page stacks THREE separate
+   blurred layers (the nav pill, the whole #main glass pane — which is
+   most of the viewport — and every testimonial card) on top of what can
+   also be a playing video underneath. On a mid-range Android GPU that
+   combination is what actually drops scroll framerate, not any one rule
+   here in isolation. None of this changes how the glass LOOKS in any
+   meaningful way at phone viewing distance — it just makes it cheaper to
+   render. (js/main.js separately skips the ocean video's decode entirely
+   on the same breakpoint — the two fixes target different costs: this is
+   compositing, that one is decode + battery.)
+   ========================================================================== */
+@media (max-width: 900px){
+  .nav-pill{
+    backdrop-filter: blur(9px) saturate(140%);
+    -webkit-backdrop-filter: blur(9px) saturate(140%);
+  }
+  #main{
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+  }
+  .testimonial-card{
+    backdrop-filter: blur(8px) saturate(140%);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+  }
+  /* The ambient glow still shows (it's a cheap static gradient once
+     frozen), it just stops animating: background-position isn't a
+     compositor-only property like transform/opacity, so animating it
+     forces a repaint of the section on every single frame. Freezing it
+     at one of the drift's natural midpoints avoids an abrupt jump when
+     the animation stops. */
+  .about::before, .schedule::before, .testimonials::before, .stats::before,
+  .cta-footer::before, .site-footer::before, .marquee-strip::before{
+    animation: none;
+    background-position: 60% 45%, 40% 55%;
+  }
 }
