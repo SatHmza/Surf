@@ -49,7 +49,16 @@
 }
 
 *, *::before, *::after{ box-sizing: border-box; }
-html{ scroll-behavior: smooth; }
+html{
+  scroll-behavior: smooth;
+  /* stop iOS Safari inflating font sizes in landscape */
+  -webkit-text-size-adjust: 100%;
+}
+/* Safety net against stray horizontal scroll on phones: clip (not
+   hidden!) never creates a scroll container, so position: sticky inside
+   keeps working. Any element poking past the viewport edge gets cut
+   instead of dragging the whole page sideways. */
+html, body{ overflow-x: clip; }
 /* anchor jumps land clear of the fixed pill nav instead of underneath it */
 [id]{ scroll-margin-top: 6rem; }
 @media (prefers-reduced-motion: reduce){
@@ -146,6 +155,17 @@ ul{ margin: 0; padding: 0; list-style: none; }
    never sits on raw animated water. */
 @supports not (backdrop-filter: blur(1px)){
   #main{ background: rgba(5, 10, 17, .93); }
+}
+/* Phones: the desktop margins + section padding double up and squeeze
+   content onto a ~300px column. Slimmer margins keep the glass identity
+   (a sliver of raw ocean each side) while giving the content the width
+   back; slightly smaller radius to match the tighter frame. */
+@media (max-width: 640px){
+  #main{
+    margin-top: -70vh;
+    margin-inline: .625rem;
+    border-radius: 14px;
+  }
 }
 
 /* ==========================================================================
@@ -364,6 +384,8 @@ body.intro-active{ overflow: hidden; }
   display: flex;
   justify-content: center;
   padding: clamp(.85rem, 3vw, 1.5rem) var(--pad-inline) 0;
+  /* keep the pill below the iPhone notch / Dynamic Island */
+  padding-top: calc(clamp(.85rem, 3vw, 1.5rem) + env(safe-area-inset-top, 0px));
   pointer-events: none;
   opacity: 0;
   transition: opacity .45s var(--ease);
@@ -422,6 +444,16 @@ body.intro-active{ overflow: hidden; }
 @media (max-width: 460px){
   .header-cta{ padding: .55rem .9rem; font-size: .82rem; }
 }
+/* Small phones: the pill (brand + CTA + toggle) runs out of room around
+   ~400px and either overflows or crushes against the screen edges —
+   tighten every part of it instead. */
+@media (max-width: 420px){
+  .nav-pill{ gap: .55rem; padding: .45rem .5rem .45rem .85rem; }
+  .brand__name{ font-size: .84rem; }
+  .brand__mark svg{ width: 17px; height: 17px; }
+  .header-cta{ padding: .5rem .7rem; font-size: .76rem; }
+  .nav-toggle{ width: 34px; height: 34px; }
+}
 
 .nav-toggle{
   display: inline-flex;
@@ -448,7 +480,7 @@ body.intro-active{ overflow: hidden; }
 @media (max-width: 899px){
   .main-nav{
     position: fixed;
-    inset: 72px var(--pad-inline) auto auto;
+    inset: calc(72px + env(safe-area-inset-top, 0px)) var(--pad-inline) auto auto;
     background: rgba(18,18,18,.92);
     backdrop-filter: blur(16px);
     border: 1px solid var(--line-soft);
@@ -485,6 +517,13 @@ body.intro-active{ overflow: hidden; }
    ========================================================================== */
 .hero-scroll-wrapper{ position: relative; z-index: 1; height: 460vh; background: transparent; }
 .hero-sticky{ position: sticky; top: 0; height: 100vh; overflow: hidden; }
+/* Mobile browsers: 100vh includes the space behind the collapsing URL
+   bar, so a vh-sized hero runs taller than the visible screen and its
+   bottom UI (CTA, scroll cue) hides behind browser chrome. dvh tracks
+   the ACTUAL visible viewport as the bar shows/hides. */
+@supports (height: 100dvh){
+  .hero-sticky{ height: 100dvh; }
+}
 #heroVideo{
   position: absolute; inset: 0; width: 100%; height: 100%; display: block;
   object-fit: cover;
@@ -532,6 +571,11 @@ body.intro-active{ overflow: hidden; }
 @media (prefers-reduced-motion: reduce){
   .hero-beat{ transform: none !important; }
 }
+@media (max-width: 640px){
+  /* narrower side padding so the headline/beat copy gets the width; the
+     beats' slide-in overshoot is clipped by .hero-sticky's overflow */
+  .hero-beat{ padding: 2rem 1.1rem; }
+}
 .hero-beat h2{
   font-family: var(--font-display);
   font-size: clamp(1.5rem, 3.6vw, 2.35rem);
@@ -550,7 +594,7 @@ body.intro-active{ overflow: hidden; }
 .hero-fixed-cta{
   position: absolute;
   left: 50%;
-  bottom: clamp(5.5rem, 14vh, 8rem);
+  bottom: calc(clamp(5.5rem, 14vh, 8rem) + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   z-index: 2;
   opacity: 0;
@@ -625,8 +669,8 @@ body.intro-active{ overflow: hidden; }
 
 .hero-progress{
   position: absolute;
-  right: clamp(1.25rem, 4vw, 2.5rem);
-  bottom: clamp(1.5rem, 6vh, 2.75rem);
+  right: calc(clamp(1.25rem, 4vw, 2.5rem) + env(safe-area-inset-right, 0px));
+  bottom: calc(clamp(1.5rem, 6vh, 2.75rem) + env(safe-area-inset-bottom, 0px));
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -669,7 +713,7 @@ body.intro-active{ overflow: hidden; }
 .hero-scroll-cue{
   position: absolute;
   left: 50%;
-  bottom: clamp(1.5rem, 6vh, 2.25rem);
+  bottom: calc(clamp(1.5rem, 6vh, 2.25rem) + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   z-index: 2;
   display: flex;
@@ -767,8 +811,9 @@ body.intro-active{ overflow: hidden; }
    ========================================================================== */
 .floating-cta{
   position: fixed;
-  right: clamp(1rem, 4vw, 1.75rem);
-  bottom: clamp(1rem, 4vw, 1.75rem);
+  /* safe-area terms keep it clear of curved corners / home indicator */
+  right: calc(clamp(1rem, 4vw, 1.75rem) + env(safe-area-inset-right, 0px));
+  bottom: calc(clamp(1rem, 4vw, 1.75rem) + env(safe-area-inset-bottom, 0px));
   z-index: 90;
   display: flex;
   align-items: center;
@@ -1050,6 +1095,16 @@ body.intro-active{ overflow: hidden; }
 }
 @supports not (backdrop-filter: blur(1px)){
   .testimonial-card{ background: var(--charcoal); }
+}
+/* Phones: stacked backdrop-filters (pane + every card) are the priciest
+   GPU work on the page and jank mid-range Androids while the ticker
+   scrolls — halve the card blur and lean on a stronger tint instead. */
+@media (max-width: 640px){
+  .testimonial-card{
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    backdrop-filter: blur(8px) saturate(140%);
+    background: rgba(20, 26, 34, .55);
+  }
 }
 .testimonial-card__avatar{
   display: inline-flex;
