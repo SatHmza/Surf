@@ -309,13 +309,18 @@
   /* ------------------------------------------------------------------ */
   /* Testimonials carousel — auto-looping ticker (no arrows). The 3 real */
   /* cards are cloned once (clones aria-hidden) so the track holds two   */
-  /* identical sets; the shared rAF loop below (same one that drives the */
-  /* WaveTicker motion) advances scrollLeft continuously and wraps it by */
-  /* exactly one set's width at the seam — the two positions are pixel-  */
-  /* identical, so the loop never visibly jumps. Auto-advance pauses on  */
-  /* hover, during a drag, and for a few seconds after a touch; mouse    */
-  /* drag panning is kept from the old carousel. Under reduced motion    */
-  /* none of this runs — no clones, no auto-scroll, native scrolling.    */
+  /* identical sets; the shared rAF loop below advances scrollLeft       */
+  /* continuously and wraps it by exactly one set's width at the seam —  */
+  /* the two positions are pixel-identical, so the loop never visibly    */
+  /* jumps. This auto-advance is treated as core ticker functionality,   */
+  /* not decoration, so — unlike the floaty WaveTicker bob/tilt further  */
+  /* down, which IS skipped — it runs the same under reduced motion too: */
+  /* the cards always keep moving right, on phone and desktop alike.     */
+  /* Auto-advance pauses on hover, during a drag, and for a few seconds  */
+  /* after an actual horizontal swipe (not just any touch landing on the */
+  /* element — a vertical page-scroll passing over it used to pause it   */
+  /* too, which read as "it keeps stopping" on phones); mouse drag       */
+  /* panning is kept from the old carousel.                              */
   /* ------------------------------------------------------------------ */
   (function () {
     var viewport = document.getElementById("testimonialsViewport");
@@ -323,13 +328,11 @@
     if (!viewport || !track) return;
     var carouselReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (!carouselReduced) {
-      Array.prototype.slice.call(track.querySelectorAll(".testimonial-card")).forEach(function (card) {
-        var clone = card.cloneNode(true);
-        clone.setAttribute("aria-hidden", "true");
-        track.appendChild(clone);
-      });
-    }
+    Array.prototype.slice.call(track.querySelectorAll(".testimonial-card")).forEach(function (card) {
+      var clone = card.cloneNode(true);
+      clone.setAttribute("aria-hidden", "true");
+      track.appendChild(clone);
+    });
 
     function trackGap() {
       return parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap || "0") || 0;
@@ -343,12 +346,31 @@
       return (track.scrollWidth - pad + trackGap()) / 2;
     }
 
-    var AUTO_SPEED = 30;      // auto-scroll, px per second
+    var AUTO_SPEED = 44;      // auto-scroll, px per second (was 30 — bumped so the loop actually reads as continuously moving rather than a barely-there drift)
     var autoPaused = false;   // desktop hover
-    var touchPauseUntil = 0;  // mobile: resume a beat after the finger leaves
+    var touchPauseUntil = 0;  // mobile: resume a beat after an actual swipe ends
     viewport.addEventListener("mouseenter", function () { autoPaused = true; });
     viewport.addEventListener("mouseleave", function () { autoPaused = false; });
-    viewport.addEventListener("touchstart", function () { touchPauseUntil = performance.now() + 3500; }, { passive: true });
+
+    // Only pause for a real horizontal swipe on the cards themselves — a
+    // touchstart alone fires even when a finger is just passing over this
+    // element on its way to scrolling the PAGE vertically, which was
+    // pausing the ticker for 3.5s on every scroll-past and made it look
+    // like it never really loops on a phone.
+    var touchStartX = 0;
+    var touchEngaged = false;
+    viewport.addEventListener("touchstart", function (e) {
+      if (!e.touches || !e.touches.length) return;
+      touchStartX = e.touches[0].clientX;
+      touchEngaged = false;
+    }, { passive: true });
+    viewport.addEventListener("touchmove", function (e) {
+      if (touchEngaged || !e.touches || !e.touches.length) return;
+      if (Math.abs(e.touches[0].clientX - touchStartX) > 6) {
+        touchEngaged = true;
+        touchPauseUntil = performance.now() + 3500;
+      }
+    }, { passive: true });
 
     /* Click-and-drag with a mouse — overflow:auto only picks up touch and
        trackpad gestures natively, not a plain mouse click-drag, so desktop
@@ -385,52 +407,56 @@
     // instead of (or alongside) panning the carousel.
     viewport.addEventListener("dragstart", function (e) { e.preventDefault(); });
 
-    /* WaveTicker motion (native re-implementation of Framer's WaveTicker
-       module — the original is a Framer-only ESM, so the effect is built
-       here instead): every card rides a slow TRAVELING sine wave. Each
-       frame, a card's vertical offset and tilt derive from its current
-       on-screen X position (so dragging/arrow-scrolling moves it along
-       the wave shape) plus a time term (so even a resting row visibly
-       undulates, crests rolling left like swell passing underneath).
-       Tilt = cos (the wave's slope), so cards lean into the roll rather
-       than staying rigidly upright. The rAF loop only runs while the
-       carousel is actually on screen, and not under reduced motion. */
+    /* Ticker loop + WaveTicker motion (native re-implementation of Framer's
+       WaveTicker module — the original is a Framer-only ESM, so the effect
+       is built here instead): every card rides a slow TRAVELING sine wave.
+       Each frame, a card's vertical offset and tilt derive from its current
+       on-screen X position (so dragging/arrow-scrolling moves it along the
+       wave shape) plus a time term (so even a resting row visibly undulates,
+       crests rolling left like swell passing underneath). Tilt = cos (the
+       wave's slope), so cards lean into the roll rather than staying
+       rigidly upright.
+       The auto-loop advance always runs (see the block comment above this
+       IIFE); only the sine-wave bob/tilt below is skipped under reduced
+       motion — that's the decorative part, the loop itself isn't. The rAF
+       loop only runs while the carousel is actually on screen. */
     // Includes the clones — they ride the same wave (their phase comes
     // from on-screen X, so the wave stays continuous across the seam).
     var waveCards = Array.prototype.slice.call(track.querySelectorAll(".testimonial-card"));
-    if (waveCards.length && !carouselReduced) {
-      var WAVE_AMP = 10;       // px of rise/fall
-      var WAVE_LEN = 520;      // px between crests
-      var WAVE_SPEED = 0.0011; // phase advance per ms (direction: crests travel left)
-      var WAVE_TILT = 1.7;     // max degrees of lean, following the slope
+    var WAVE_AMP = 10;       // px of rise/fall
+    var WAVE_LEN = 520;      // px between crests
+    var WAVE_SPEED = 0.0011; // phase advance per ms (direction: crests travel left)
+    var WAVE_TILT = 1.7;     // max degrees of lean, following the slope
 
-      var waveRunning = false;
-      var waveRaf = 0;
-      var waveInView = false;
-      var lastFrameTs = 0;
+    var tickerRunning = false;
+    var tickerRaf = 0;
+    var tickerInView = false;
+    var lastFrameTs = 0;
 
-      var waveFrame = function (now) {
-        if (!waveRunning) return;
-        var dt = lastFrameTs ? now - lastFrameTs : 16;
-        lastFrameTs = now;
-        if (dt > 120) dt = 16; // resumed after jank/tab switch — don't lurch
+    var tickerFrame = function (now) {
+      if (!tickerRunning) return;
+      var dt = lastFrameTs ? now - lastFrameTs : 16;
+      lastFrameTs = now;
+      if (dt > 120) dt = 16; // resumed after jank/tab switch — don't lurch
 
-        // ---- auto-loop advance + seam wrap (see block comment above) ----
-        if (!isDragging) {
-          if (!autoPaused && now > touchPauseUntil) {
-            viewport.scrollLeft += AUTO_SPEED * (dt / 1000);
-          }
-          var w = wrapWidth();
-          if (viewport.scrollLeft >= w) {
-            viewport.scrollLeft -= w;
-          } else if (viewport.scrollLeft < 1) {
-            // covers a user who dragged back to the hard left edge: jump
-            // forward one set (pixel-identical position) so there's
-            // always room to keep looping in both directions
-            viewport.scrollLeft += w;
-          }
+      // ---- auto-loop advance + seam wrap (always runs — see block comment above) ----
+      if (!isDragging) {
+        if (!autoPaused && now > touchPauseUntil) {
+          viewport.scrollLeft += AUTO_SPEED * (dt / 1000);
         }
+        var w = wrapWidth();
+        if (viewport.scrollLeft >= w) {
+          viewport.scrollLeft -= w;
+        } else if (viewport.scrollLeft < 1) {
+          // covers a user who dragged back to the hard left edge: jump
+          // forward one set (pixel-identical position) so there's
+          // always room to keep looping in both directions
+          viewport.scrollLeft += w;
+        }
+      }
 
+      // ---- sine-wave bob/tilt (decorative — skipped under reduced motion) ----
+      if (!carouselReduced && waveCards.length) {
         var originLeft = viewport.getBoundingClientRect().left;
         waveCards.forEach(function (card) {
           var r = card.getBoundingClientRect();
@@ -440,36 +466,36 @@
           var tilt = Math.cos(phase) * WAVE_TILT;
           card.style.transform = "translateY(" + y.toFixed(2) + "px) rotate(" + tilt.toFixed(2) + "deg)";
         });
-        waveRaf = requestAnimationFrame(waveFrame);
-      };
-
-      var setWave = function (on) {
-        if (on && !waveRunning) {
-          waveRunning = true;
-          lastFrameTs = 0; // fresh dt after a pause — no catch-up jump
-          waveRaf = requestAnimationFrame(waveFrame);
-        } else if (!on && waveRunning) {
-          waveRunning = false;
-          cancelAnimationFrame(waveRaf);
-        }
-      };
-
-      if ("IntersectionObserver" in window) {
-        var waveIo = new IntersectionObserver(function (entries) {
-          entries.forEach(function (entry) {
-            waveInView = entry.isIntersecting;
-            setWave(waveInView && document.visibilityState !== "hidden");
-          });
-        }, { threshold: 0 });
-        waveIo.observe(viewport);
-      } else {
-        waveInView = true;
-        setWave(true);
       }
-      document.addEventListener("visibilitychange", function () {
-        setWave(waveInView && document.visibilityState === "visible");
-      });
+      tickerRaf = requestAnimationFrame(tickerFrame);
+    };
+
+    var setTicker = function (on) {
+      if (on && !tickerRunning) {
+        tickerRunning = true;
+        lastFrameTs = 0; // fresh dt after a pause — no catch-up jump
+        tickerRaf = requestAnimationFrame(tickerFrame);
+      } else if (!on && tickerRunning) {
+        tickerRunning = false;
+        cancelAnimationFrame(tickerRaf);
+      }
+    };
+
+    if ("IntersectionObserver" in window) {
+      var tickerIo = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          tickerInView = entry.isIntersecting;
+          setTicker(tickerInView && document.visibilityState !== "hidden");
+        });
+      }, { threshold: 0 });
+      tickerIo.observe(viewport);
+    } else {
+      tickerInView = true;
+      setTicker(true);
     }
+    document.addEventListener("visibilitychange", function () {
+      setTicker(tickerInView && document.visibilityState === "visible");
+    });
   })();
 
   /* Hero scroll-scrubbed frame sequence now lives in js/hero-scroll.js */
