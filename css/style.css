@@ -1,0 +1,1313 @@
+/* ==========================================================================
+   Rabat Surf Club — design tokens
+   Restyled to follow the structure/visual language of makermember.com:
+   pure black base, elegant serif display type, monochrome white/black
+   buttons, thin hairline dividers. The scroll-scrubbed hero mechanic
+   (js/hero-scroll.js) is unchanged — only its colors/type were updated.
+   ========================================================================== */
+:root{
+  --black:      #000000;
+  --near-black: #0a0a0a;
+  --charcoal:   #161616;
+  --charcoal-2: #1e1e1e;
+  --line:       rgba(255,255,255,.14);
+  --line-soft:  rgba(255,255,255,.08);
+  --white:      #ffffff;
+  --ink:        rgba(255,255,255,.94);
+  --ink-soft:   rgba(255,255,255,.68);
+  --ink-faint:  rgba(255,255,255,.45);
+  --whatsapp:   #25D366;
+  --whatsapp-dark: #1DA851;
+  /* Warm bronze accent, borrowed from zorge9.estate — used sparingly
+     (schedule times, stat numbers, footer watermark) as the one warm
+     note against the otherwise monochrome black/white system. */
+  --bronze:     #c9a074;
+  --bronze-soft: rgba(201,160,116,.55);
+  /* Ocean-blue accent for the ambient background glow on black sections
+     (see "Ambient ocean glow" below) — stored as an r,g,b triplet so it
+     can be dropped into rgba() at whatever alpha each gradient stop needs. */
+  --ocean-1: 46,110,168;
+  --ocean-2: 30,80,140;
+
+  --font-display: "Playfair Display", "Georgia", serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+
+  --radius-card: 14px;
+  --radius-input: 10px;
+  --radius-pill: 999px;
+
+  --container: 1200px;
+  --gap-section: clamp(4rem, 9vw, 7.5rem);
+  --pad-inline: clamp(1.25rem, 5vw, 2.5rem);
+
+  --ease: cubic-bezier(.16,1,.3,1);
+  --shadow-card: 0 1px 2px rgba(0,0,0,.4), 0 20px 40px -16px rgba(0,0,0,.6);
+  --shadow-btn: 0 10px 24px -10px rgba(0,0,0,.5);
+}
+
+*, *::before, *::after{ box-sizing: border-box; }
+html{ scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior: auto; }
+  *, *::before, *::after{ animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+body{
+  margin: 0;
+  background: var(--black);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+img{ max-width: 100%; display: block; }
+h1,h2,h3{ font-family: var(--font-display); color: var(--white); line-height: 1.1; margin: 0; font-weight: 600; }
+p{ margin: 0; }
+a{ color: inherit; }
+ul{ margin: 0; padding: 0; list-style: none; }
+
+.section-inner{
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--pad-inline);
+}
+
+/* ==========================================================================
+   Ambient ocean glow — a slow, soft wash of blue light behind every black
+   section, meant to read as light reflecting and drifting across water
+   rather than a literal wave shape. Two large, low-opacity radial blobs
+   whose positions drift on a slow loop; `isolation: isolate` on each
+   section gives the ::before its own stacking context so the z-index:-1
+   glow layer stays contained behind that section's own content (and never
+   bleeds over an adjacent section), without needing every section's inner
+   content to be repositioned.
+   ========================================================================== */
+.about, .schedule, .testimonials, .stats, .cta-footer, .site-footer, .marquee-strip{
+  /* position:relative so the ::before's `position:absolute; inset:0` below
+     is contained by THIS section's own box (its containing block) rather
+     than whatever positioned ancestor happens to be further up the tree.
+     .cta-footer/.site-footer already declare this elsewhere — repeating it
+     here is harmless (same value, no conflict). */
+  position: relative;
+  isolation: isolate;
+}
+.about::before, .schedule::before, .testimonials::before, .stats::before,
+.cta-footer::before, .site-footer::before, .marquee-strip::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(52% 65% at 18% 25%, rgba(var(--ocean-1), .38), transparent 62%),
+    radial-gradient(46% 60% at 82% 75%, rgba(var(--ocean-2), .32), transparent 65%);
+  background-repeat: no-repeat;
+  background-size: 220% 220%;
+  animation: oceanGlowDrift 14s ease-in-out infinite alternate;
+}
+@keyframes oceanGlowDrift{
+  0%   { background-position: 0% 10%, 100% 90%; }
+  25%  { background-position: 60% 45%, 40% 55%; }
+  50%  { background-position: 100% 80%, 0% 20%; }
+  75%  { background-position: 30% 95%, 70% 5%; }
+  100% { background-position: 90% 15%, 10% 85%; }
+}
+@media (prefers-reduced-motion: reduce){
+  .about::before, .schedule::before, .testimonials::before, .stats::before,
+  .cta-footer::before, .site-footer::before, .marquee-strip::before{
+    animation: none;
+  }
+}
+
+:focus-visible{
+  outline: 2.5px solid var(--white);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.skip-link{
+  position: absolute;
+  left: 1rem; top: -3rem;
+  background: var(--white);
+  color: var(--black);
+  padding: .75rem 1.25rem;
+  border-radius: var(--radius-input);
+  z-index: 999;
+  transition: top .2s var(--ease);
+}
+.skip-link:focus{ top: 1rem; }
+
+/* ==========================================================================
+   Buttons — monochrome: filled white pill (primary action), transparent
+   outline (secondary). No color accents anywhere in the button system,
+   matching the reference site's black/white-only palette.
+   ========================================================================== */
+.btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  white-space: nowrap;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: .95rem;
+  letter-spacing: -.01em;
+  text-decoration: none;
+  border-radius: var(--radius-pill);
+  padding: .8rem 1.6rem;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: transform .22s var(--ease), box-shadow .22s var(--ease), background-color .22s var(--ease), border-color .22s var(--ease), color .22s var(--ease);
+}
+.btn:active{ transform: translateY(1px) scale(.98); }
+
+.btn--pill{
+  background: var(--white);
+  color: var(--black);
+  box-shadow: var(--shadow-btn);
+}
+.btn--pill:hover{
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 18px 34px -12px rgba(0,0,0,.7);
+}
+
+.btn--outline{
+  background: transparent;
+  color: var(--white);
+  border-color: rgba(255,255,255,.4);
+}
+.btn--outline:hover{ background: rgba(255,255,255,.1); border-color: var(--white); }
+
+.btn--sm{ padding: .55rem 1.1rem; font-size: .85rem; }
+.btn--lg{ padding: 1rem 1.9rem; font-size: 1rem; }
+.btn--block{ width: 100%; }
+
+.text-link{
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1.5px solid rgba(255,255,255,.5);
+  padding-bottom: 2px;
+}
+.text-link:hover{ border-color: var(--white); }
+.text-link__arrow{
+  display: inline-flex;
+  transition: transform .2s var(--ease);
+}
+.text-link:hover .text-link__arrow{ transform: translate(2px, -2px); }
+@media (prefers-reduced-motion: reduce){
+  .text-link__arrow{ transition: none; }
+}
+
+/* ==========================================================================
+   Intro — full-screen loader whose wordmark shrinks down into the real
+   nav's brand position, borrowed from monarque-evenements.com. Each
+   letter fades/rises in on its own (staggered by --i, set inline on every
+   .intro__char in index.html), the full word holds, then it shrinks. The
+   scale and translate for the shrink are computed live in js/main.js from
+   the actual on-screen position of .site-header .brand__name (a
+   FLIP-style animation), so it lands correctly at every viewport width
+   rather than a guessed offset. The full sequence (letters in, hold,
+   shrink, handoff) is timed in js/main.js to run a solid ~4s — the two
+   transition durations below (.8s shrink, .5s overlay fade) are read by
+   that timing, so if you change either here, update the matching
+   SHRINK_DURATION_MS / FADE_DURATION_MS constants there too.
+   ========================================================================== */
+body.intro-active{ overflow: hidden; }
+.intro{
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--black);
+  opacity: 1;
+  transition: opacity .5s var(--ease);
+}
+.intro.is-hidden{ opacity: 0; pointer-events: none; }
+.intro__inner{
+  display: flex;
+  align-items: center;
+  gap: .85rem;
+  transform-origin: left center;
+  will-change: transform;
+}
+/* The whole icon+wordmark group shrinks into the nav's .brand link as one
+   unit (see js/main.js) so the compass icon travels with the text instead
+   of being left behind while only the text animated away. */
+.intro__inner.is-shrinking{
+  transition: transform .8s var(--ease);
+}
+.intro__mark{
+  display: inline-flex;
+  color: var(--white);
+  opacity: 0;
+  transition: opacity .3s var(--ease);
+  flex-shrink: 0;
+}
+.intro__mark.is-visible{ opacity: 1; }
+.intro__wordmark{
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--white);
+  font-size: clamp(2.4rem, 9vw, 6rem);
+  white-space: nowrap;
+}
+.intro__char{
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(.4em);
+  /* stagger driven by --i (0-based index, set inline per character) */
+  transition: opacity .5s var(--ease), transform .5s var(--ease);
+  transition-delay: calc(var(--i, 0) * 45ms);
+}
+.intro__char--space{ width: .28em; }
+.intro__wordmark.is-revealing .intro__char{
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce){
+  .intro{ transition: none; }
+  .intro__inner.is-shrinking{ transition: none; }
+  .intro__char{ transition: none; opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   Header / nav — floating rounded capsule, fixed over all content
+   (matches the reference site's pill nav rather than a full-width bar).
+   ========================================================================== */
+.site-header{
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  padding: clamp(.85rem, 3vw, 1.5rem) var(--pad-inline) 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .45s var(--ease);
+}
+.site-header.is-visible{ opacity: 1; }
+@media (prefers-reduced-motion: reduce){
+  .site-header{ transition: none; }
+}
+.nav-pill{
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 1.9rem);
+  max-width: 100%;
+  background: rgba(18,18,18,.6);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  padding: .55rem .6rem .55rem 1.2rem;
+  box-shadow: 0 12px 30px -14px rgba(0,0,0,.7);
+}
+
+.brand{
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  text-decoration: none;
+  color: var(--white);
+}
+.brand__mark{ display: inline-flex; flex-shrink: 0; color: var(--white); }
+.brand__name{
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+@media (max-width: 380px){
+  .brand__name{ font-size: .88rem; }
+}
+
+.main-nav{
+  display: none;
+  align-items: center;
+  gap: 1.6rem;
+  font-size: .88rem;
+  font-weight: 500;
+}
+.main-nav a{
+  text-decoration: none;
+  color: var(--ink-soft);
+  transition: color .15s var(--ease);
+}
+.main-nav a:hover{ color: var(--white); }
+
+@media (max-width: 460px){
+  .header-cta{ padding: .55rem .9rem; font-size: .82rem; }
+}
+
+.nav-toggle{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--line);
+  background: transparent;
+  color: var(--white);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.nav-toggle__icon--close{ display: none; }
+.nav-toggle.is-open .nav-toggle__icon--menu{ display: none; }
+.nav-toggle.is-open .nav-toggle__icon--close{ display: block; }
+
+@media (min-width: 900px){
+  .main-nav{ display: flex; }
+  .nav-toggle{ display: none; }
+}
+
+/* mobile nav drawer */
+@media (max-width: 899px){
+  .main-nav{
+    position: fixed;
+    inset: 72px var(--pad-inline) auto auto;
+    background: rgba(18,18,18,.92);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-card);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    padding: .5rem 1.25rem 1rem;
+    transform: translateY(-8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s var(--ease), transform .2s var(--ease);
+  }
+  .main-nav.is-open{
+    display: flex;
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .main-nav a{
+    width: 100%;
+    padding: .8rem 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .main-nav a:last-child{ border-bottom: none; }
+}
+
+/* ==========================================================================
+   Hero — scroll-scrubbed frame sequence, pinned inside the hero only
+   (see js/hero-scroll.js). Mechanic unchanged; only colors/typography
+   below were restyled to the black/serif system.
+   ========================================================================== */
+.hero-scroll-wrapper{ position: relative; height: 460vh; background: var(--black); }
+.hero-sticky{ position: sticky; top: 0; height: 100vh; overflow: hidden; }
+#heroCanvas{
+  position: absolute; inset: 0; width: 100%; height: 100%; display: block;
+  transform-origin: center center;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce){
+  #heroCanvas{ transform: none !important; }
+}
+
+.hero-vignette{
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.75) 100%),
+    radial-gradient(120% 75% at 50% 100%, rgba(0,0,0,.55), transparent 62%);
+}
+
+.hero-beat{
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 2rem; opacity: 0; pointer-events: none; color: var(--white); z-index: 2;
+  transform: translateX(0);
+  will-change: opacity, transform;
+}
+@media (prefers-reduced-motion: reduce){
+  .hero-beat{ transform: none !important; }
+}
+.hero-beat h2{
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.6vw, 2.35rem);
+  font-weight: 500;
+  line-height: 1.25;
+  max-width: 22ch;
+  color: var(--white);
+  text-shadow: 0 2px 24px rgba(0,0,0,.6);
+}
+/* Single persistent CTA, decoupled from whichever beat is currently on
+   screen. This used to be four separate buttons (one per beat) that each
+   faded in/out with their own headline text, which read as the button
+   itself "changing" every time the beat did. Now it fades in once, near
+   the top of the scroll, and then just sits in a fixed spot for the whole
+   hero — only the text above it changes. */
+.hero-fixed-cta{
+  position: absolute;
+  left: 50%;
+  bottom: clamp(5.5rem, 14vh, 8rem);
+  transform: translateX(-50%);
+  z-index: 2;
+  opacity: 0;
+  animation: heroFadeIn .6s var(--ease) forwards;
+  animation-delay: .75s;
+  pointer-events: auto;
+}
+/* .btn--pill:hover / .btn:active both set their own `transform`, which
+   would otherwise replace (not add to) the translateX(-50%) above and
+   knock the button sideways on hover/click. Re-apply the centering
+   alongside each state's own motion instead. */
+.hero-fixed-cta:hover{ transform: translate(-50%, -2px) scale(1.02); }
+.hero-fixed-cta:active{ transform: translate(-50%, 1px) scale(.98); }
+
+.hero-headline{
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  font-size: clamp(2.6rem, 8vw, 5.6rem);
+  font-weight: 600;
+  letter-spacing: .01em;
+  line-height: 1.05;
+  color: var(--white);
+  margin-bottom: .9rem;
+  text-shadow: 0 4px 32px rgba(0,0,0,.6);
+}
+.hero-headline__word{
+  display: inline-block;
+  opacity: 0;
+  animation: heroWordIn .85s var(--ease) forwards;
+}
+.hero-headline__word:nth-child(1){ animation-delay: .05s; }
+.hero-headline__word:nth-child(2){ animation-delay: .15s; }
+.hero-headline__word:nth-child(3){ animation-delay: .25s; }
+.hero-headline__word:nth-child(4){ animation-delay: .35s; }
+
+.hero-headline__sub{
+  font-family: var(--font-body);
+  font-size: clamp(.92rem, 1.5vw, 1.08rem);
+  font-weight: 400;
+  letter-spacing: .01em;
+  color: rgba(255,255,255,.82);
+  max-width: 40ch;
+  margin-bottom: 2.1rem;
+  text-shadow: 0 1px 12px rgba(0,0,0,.5);
+  opacity: 0;
+  animation: heroFadeUp .7s var(--ease) forwards;
+  animation-delay: .52s;
+}
+@keyframes heroWordIn{
+  from{ opacity: 0; transform: translateY(.4em); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+@keyframes heroFadeIn{
+  from{ opacity: 0; }
+  to{ opacity: 1; }
+}
+@keyframes heroFadeUp{
+  from{ opacity: 0; transform: translateY(14px); }
+  to{ opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce){
+  .hero-headline__word, .hero-headline__sub{
+    animation: none !important; opacity: 1 !important; transform: none !important;
+  }
+  /* .hero-fixed-cta keeps its transform: translateX(-50%) even here — that's
+     centering, not motion, and dropping it to none would shove the button
+     off to the left edge instead of leaving it centered. */
+  .hero-fixed-cta{
+    animation: none !important; opacity: 1 !important; transform: translateX(-50%) !important;
+  }
+}
+
+.hero-progress{
+  position: absolute;
+  right: clamp(1.25rem, 4vw, 2.5rem);
+  bottom: clamp(1.5rem, 6vh, 2.75rem);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .6rem;
+}
+/* Thin fill line behind the dots, tracking OVERALL scroll progress (set
+   via #heroProgressFill's height in js/hero-scroll.js) — the dots alone
+   only show which beat is active, not how much of the ~460vh hero is
+   left, which reads as directionless on a long scroll-scrub section. */
+.hero-progress__track{
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,.18);
+  border-radius: 1px;
+  z-index: -1;
+}
+.hero-progress__fill{
+  position: absolute;
+  left: 0; top: 0;
+  width: 100%;
+  height: 0%;
+  background: var(--white);
+  border-radius: 1px;
+}
+.hero-progress__dot{
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.32);
+  transition: background-color .35s var(--ease), transform .35s var(--ease);
+}
+.hero-progress__dot.is-active{
+  background: var(--white);
+  transform: scale(1.7);
+}
+
+.hero-scroll-cue{
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.5rem, 6vh, 2.25rem);
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .55rem;
+  color: rgba(255,255,255,.72);
+  font-size: .68rem;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 8px rgba(0,0,0,.5);
+  transition: opacity .25s var(--ease);
+}
+.hero-scroll-cue__line{
+  width: 1px; height: 26px;
+  background: linear-gradient(to bottom, rgba(255,255,255,.85), transparent);
+  animation: heroScrollCueBob 1.8s ease-in-out infinite;
+}
+@keyframes heroScrollCueBob{
+  0%, 100%{ transform: scaleY(1); opacity: .9; }
+  50%{ transform: scaleY(.55); opacity: .4; }
+}
+@media (prefers-reduced-motion: reduce){
+  .hero-scroll-cue__line{ animation: none; }
+}
+
+.whiteout-overlay{
+  position: absolute; inset: 0; background: #fff; opacity: 0;
+  pointer-events: none; z-index: 3;
+}
+
+/* ==========================================================================
+   Reveal-on-scroll (shared utility)
+   ========================================================================== */
+.reveal{
+  opacity: 0;
+  transform: translateY(22px);
+  transition: opacity .7s var(--ease), transform .7s var(--ease);
+  transition-delay: var(--reveal-delay, 0s);
+}
+.reveal.is-visible{ opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce){
+  .reveal{ opacity: 1; transform: none; }
+}
+
+.reveal-scale{
+  opacity: 0;
+  transform: scale(.9);
+  transition: opacity .6s var(--ease), transform .6s var(--ease);
+}
+.reveal-scale.is-visible{ opacity: 1; transform: scale(1); }
+@media (prefers-reduced-motion: reduce){
+  .reveal-scale{ opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   Decorative motifs — compass + wave-rings
+   ========================================================================== */
+.motif{
+  position: absolute;
+  display: block;
+  line-height: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.motif svg{ display: block; width: 100%; height: auto; }
+
+.motif--compass-location{
+  width: 82px;
+  color: rgba(255,255,255,.5);
+  top: clamp(1.5rem, 4vw, 2.25rem);
+  right: clamp(1.25rem, 5vw, 2.5rem);
+}
+.motif--wave-location{
+  width: 90px;
+  color: rgba(255,255,255,.5);
+  bottom: clamp(1.5rem, 4vw, 2.25rem);
+  left: clamp(1.25rem, 5vw, 2.5rem);
+}
+.motif--wave-footer{
+  width: 90px;
+  color: rgba(255,255,255,.35);
+  bottom: clamp(1.75rem, 4vw, 2.5rem);
+  right: clamp(1.25rem, 5vw, 2.5rem);
+}
+@media (max-width: 640px){
+  .motif--compass-location,
+  .motif--wave-location,
+  .motif--wave-footer{ width: 60px; }
+}
+
+/* ==========================================================================
+   Floating WhatsApp CTA — kept its recognizable brand green (the one
+   deliberate color in an otherwise monochrome palette), since as a
+   functional chat affordance it reads better recognizable at a glance.
+   ========================================================================== */
+.floating-cta{
+  position: fixed;
+  right: clamp(1rem, 4vw, 1.75rem);
+  bottom: clamp(1rem, 4vw, 1.75rem);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--whatsapp);
+  color: var(--white);
+  box-shadow: 0 10px 24px -8px rgba(0,0,0,.6);
+  opacity: 0;
+  transform: translateY(28px) scale(.85);
+  pointer-events: none;
+  transition: opacity .45s var(--ease), transform .45s var(--ease), background-color .22s var(--ease);
+}
+.floating-cta:hover{ background: var(--whatsapp-dark); }
+.floating-cta.is-visible{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.floating-cta__ring{
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid var(--whatsapp);
+  opacity: 0;
+}
+.floating-cta.is-visible .floating-cta__ring{
+  animation: floatingCtaPulse 2.6s var(--ease) 1s infinite;
+}
+@keyframes floatingCtaPulse{
+  0%   { opacity: .55; transform: scale(1); }
+  75%  { opacity: 0;   transform: scale(1.35); }
+  100% { opacity: 0;   transform: scale(1.35); }
+}
+@media (max-width: 640px){
+  .floating-cta{ width: 50px; height: 50px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .floating-cta{ transition: opacity .3s var(--ease); transform: none !important; }
+  .floating-cta__ring{ animation: none !important; }
+}
+
+/* ==========================================================================
+   Marquee strip — "why us" ticker, standing in for the reference site's
+   backed-by logo strip. Two identical halves in the track + translateX(-50%)
+   makes the loop seamless.
+   ========================================================================== */
+.marquee-strip{
+  padding-block: clamp(2.5rem, 6vw, 4rem);
+  background: var(--black);
+  border-top: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+.marquee-strip__label{
+  text-align: center;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 1.5rem;
+}
+.marquee{
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+.marquee__track{
+  display: flex;
+  align-items: center;
+  gap: 2.25rem;
+  width: max-content;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.4vw, 1.5rem);
+  color: rgba(255,255,255,.75);
+  animation: marqueeScroll 26s linear infinite;
+}
+.marquee__dot{ color: rgba(255,255,255,.3); font-size: 1rem; }
+@keyframes marqueeScroll{
+  from{ transform: translateX(0); }
+  to{ transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce){
+  .marquee__track{ animation: none; }
+}
+
+/* ==========================================================================
+   About
+   ========================================================================== */
+.about{ padding-block: var(--gap-section); background: var(--black); }
+.about__grid{
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+}
+.about__media img{
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  width: 100%;
+  height: auto;
+  filter: saturate(.92);
+}
+.about__copy h2{
+  font-size: clamp(1.7rem, 3.4vw, 2.5rem);
+  font-weight: 500;
+  margin-bottom: 1.1rem;
+}
+.about__copy p{
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  max-width: 52ch;
+  margin-bottom: 1rem;
+}
+.about__facts{
+  margin-top: 1.75rem;
+  display: grid;
+  gap: 1.1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line-soft);
+}
+.about__facts li{
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+}
+.about__fact-icon{
+  display: inline-flex;
+  color: var(--bronze);
+  margin-bottom: .45rem;
+}
+.about__facts strong{
+  font-family: var(--font-display);
+  color: var(--white);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.about__facts span{ color: var(--ink-faint); font-size: .9rem; }
+
+@media (min-width: 860px){
+  .about__grid{ grid-template-columns: .85fr 1fr; gap: 4rem; }
+  .about__facts{ grid-template-columns: repeat(3, 1fr); border-top: none; padding-top: 0; }
+}
+
+/* ==========================================================================
+   Daily schedule — time-of-day narrative beats, borrowed from
+   zorge9.estate. Big bronze serif time markers paired with short prose,
+   thin hairline separating each row.
+   ========================================================================== */
+.schedule{ padding-block: var(--gap-section); background: var(--black); }
+.schedule__list{
+  display: flex;
+  flex-direction: column;
+}
+.schedule__row{
+  display: grid;
+  gap: .5rem 2.5rem;
+  padding-block: 1.75rem;
+  border-top: 1px solid var(--line-soft);
+}
+.schedule__row:last-child{ border-bottom: 1px solid var(--line-soft); }
+.schedule__time{
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  color: var(--bronze);
+}
+.schedule__row p{
+  color: var(--ink-soft);
+  font-size: 1.02rem;
+  max-width: 56ch;
+  align-self: center;
+}
+@media (min-width: 720px){
+  .schedule__row{ grid-template-columns: 10rem 1fr; align-items: center; }
+}
+
+/* ==========================================================================
+   Section headings (shared)
+   ========================================================================== */
+.section-head{ max-width: 62ch; margin-bottom: 2.75rem; }
+.section-head h2{ font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 500; margin-bottom: .85rem; }
+.section-head p{ color: var(--ink-soft); font-size: 1.05rem; }
+.section-head--tight{ margin-bottom: 2rem; }
+
+/* ==========================================================================
+   Gallery — dense photo masonry (CSS columns), standing in for the
+   reference site's member-portrait grid.
+   ========================================================================== */
+.gallery{ padding-block: var(--gap-section); background: var(--near-black); }
+.gallery__grid{
+  column-count: 2;
+  column-gap: .8rem;
+}
+.gallery__img{
+  width: 100%;
+  height: auto;
+  display: block;
+  margin-bottom: .8rem;
+  border-radius: 8px;
+  break-inside: avoid;
+  filter: saturate(.92);
+}
+@media (min-width: 640px){
+  .gallery__grid{ column-count: 3; }
+}
+@media (min-width: 1000px){
+  .gallery__grid{ column-count: 4; }
+}
+
+/* ==========================================================================
+   Testimonials — a discrete, user-driven carousel (real Google reviews).
+   The viewport is the actual scroll container (native touch/trackpad drag
+   works for free); the prev/next buttons just nudge scrollLeft by one
+   card's width via JS. scroll-snap keeps a card always settling flush
+   against the edge instead of stopping half-scrolled.
+   ========================================================================== */
+.testimonials{
+  padding-block: var(--gap-section);
+  background: var(--black);
+}
+.testimonials__viewport{
+  /* Capped narrower than the 3 cards' combined width on purpose: with only
+     3 real reviews (no more looping duplicates now that it's a discrete
+     carousel), a full-bleed edge-to-edge viewport on a normal-or-wider
+     desktop screen was actually WIDE ENOUGH to show all 3 cards at once —
+     so there was nothing left to overflow, which is why it looked frozen
+     and wouldn't pan with the mouse or the arrows at all. Keeping the
+     viewport narrower than the total card width guarantees there's always
+     a card sitting off-screen to scroll to, at every screen size, and it
+     doubles as a visual cue (a card peeking off the edge) that there's
+     more to see. */
+  max-width: min(100%, 60rem);
+  margin-inline: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+  mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+}
+/* While a mouse drag is in progress (see js/main.js): a plain overflow
+   container doesn't support click-and-drag panning on desktop out of the
+   box (only touch/trackpad), so JS handles it manually and toggles this
+   class for the grabbing cursor + to stop text/cards being selected and
+   scroll-snap from fighting the drag mid-motion. */
+.testimonials__viewport.is-dragging{
+  cursor: grabbing;
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+  user-select: none;
+}
+.testimonials__viewport::-webkit-scrollbar{ display: none; }
+.testimonials__track{
+  display: flex;
+  gap: 1.25rem;
+  width: max-content;
+  padding-inline: var(--pad-inline);
+}
+.testimonial-card{
+  width: min(340px, 82vw);
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  background: var(--charcoal);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-card);
+  padding: 1.75rem 1.6rem;
+}
+.testimonial-card__avatar{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.1);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin-bottom: .85rem;
+}
+.testimonial-card__rating{
+  display: flex;
+  gap: .2rem;
+  color: var(--bronze);
+  margin-bottom: .6rem;
+}
+.testimonial-card h3{ font-size: 1rem; font-weight: 600; margin-bottom: .15rem; }
+.testimonial-card__role{ color: var(--ink-faint); font-size: .85rem; margin-bottom: 1rem; }
+.testimonial-card p:last-child{ color: var(--ink-soft); font-size: .95rem; line-height: 1.5; }
+
+.testimonials__controls{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.testimonials__more{
+  display: block;
+  text-align: center;
+  margin-top: 0;
+}
+.testimonials__arrow{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line-soft);
+  background: var(--charcoal);
+  color: var(--white);
+  cursor: pointer;
+  transition: background var(--ease-fast, .2s ease), border-color var(--ease-fast, .2s ease), transform .2s ease;
+}
+.testimonials__arrow:hover{ background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.3); }
+.testimonials__arrow:active{ transform: scale(.92); }
+.testimonials__arrow:disabled{ opacity: .35; cursor: default; pointer-events: none; }
+@media (max-width: 560px){
+  .testimonials__controls{ gap: 1rem; }
+}
+@media (prefers-reduced-motion: reduce){
+  .testimonials__viewport{ scroll-behavior: auto; }
+  .testimonials__arrow{ transition: none; }
+}
+
+/* ==========================================================================
+   Location
+   ========================================================================== */
+.location{ position: relative; padding-block: var(--gap-section); background: var(--near-black); }
+.location__grid{
+  display: grid;
+  gap: 2.5rem;
+}
+.location__copy h2{ font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 500; margin-bottom: 1.1rem; }
+.location__copy p{ color: var(--ink-soft); font-size: 1.05rem; max-width: 54ch; margin-bottom: 1.75rem; }
+
+.location__details{
+  display: grid;
+  gap: 1.25rem;
+  margin: 0 0 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line-soft);
+}
+.location__details dt{
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--white);
+  font-size: .95rem;
+  margin-bottom: .2rem;
+}
+.location__pin{
+  display: inline-flex;
+  margin-right: .35rem;
+  color: var(--bronze);
+}
+.location__details dd{ margin: 0; color: var(--ink-faint); font-size: .95rem; }
+
+.location__map{
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  min-height: 320px;
+  /* dark-mode-map trick: invert() alone flips hue incorrectly (blue water
+     reads as orange/red) — pairing it with hue-rotate(180deg) is the
+     standard recipe that restores correct hues while still darkening the
+     map to match the site's palette. */
+  filter: invert(90%) hue-rotate(180deg) brightness(.95) contrast(.9);
+}
+.location__map iframe{
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  border: 0;
+  display: block;
+}
+
+@media (min-width: 860px){
+  .location__grid{ grid-template-columns: 1fr 1.1fr; gap: 4rem; align-items: stretch; }
+  .location__details{ grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ==========================================================================
+   By the numbers — stat row, standing in for the reference site's stats
+   section.
+   ========================================================================== */
+.stats{ padding-block: var(--gap-section); background: var(--black); text-align: center; }
+.stats__heading{
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  font-weight: 500;
+  margin-bottom: clamp(2.5rem, 6vw, 4rem);
+}
+.stats__grid{
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+}
+.stat{
+  padding: 1.25rem .5rem;
+  border-right: 1px solid var(--line-soft);
+  border-bottom: 1px solid var(--line-soft);
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.stat:nth-child(2n){ border-right: none; }
+.stat:nth-last-child(-n+2){ border-bottom: none; }
+.stat__value{
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  font-weight: 600;
+  color: var(--bronze);
+}
+.stat__label{
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+@media (min-width: 720px){
+  .stats__grid{ grid-template-columns: repeat(4, 1fr); }
+  .stat{ border-bottom: none; }
+  .stat:nth-child(2n){ border-right: 1px solid var(--line-soft); }
+  .stat:last-child{ border-right: none; }
+}
+
+/* ==========================================================================
+   Lessons & services — staggered offset photo grid with overlaid caption,
+   standing in for the reference site's "special guests" layout.
+   ========================================================================== */
+.lessons{ padding-block: var(--gap-section); background: var(--near-black); }
+.service-grid{
+  display: grid;
+  gap: 3rem 1.5rem;
+  grid-template-columns: 1fr;
+}
+.service-card{
+  position: relative;
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  aspect-ratio: 4 / 5;
+}
+.service-card img{
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: saturate(.9);
+}
+.service-card::after{
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.15) 45%, transparent 70%);
+}
+.service-card__caption{
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 1.4rem 1.4rem 1.5rem;
+  z-index: 1;
+}
+.service-card__icon{
+  display: inline-flex;
+  color: var(--white);
+  opacity: .85;
+  margin-bottom: .6rem;
+}
+.service-card__caption h3{ font-size: 1.15rem; font-weight: 600; margin-bottom: .25rem; }
+.service-card__caption p{ color: rgba(255,255,255,.75); font-size: .88rem; }
+
+@media (min-width: 640px){
+  .service-grid{ grid-template-columns: repeat(2, 1fr); }
+  /* Staggered "bricklayer" offset: card 2 (Group Lessons) drops down and
+     card 4 (Wetsuit Rental) — directly below it in the same column — lifts
+     up to meet it. At the old ±3rem with only a 1.5rem row-gap those two
+     margins ate the gap entirely and then some (3+3 > 1.5), so the two
+     images ended up overlapping/touching instead of just offset. ±1rem
+     against the grid's new 3rem row-gap leaves a full 1rem of clearance
+     between them (3rem gap − 1rem − 1rem) while still reading as a
+     deliberate stagger rather than a plain aligned grid. */
+  .service-grid .service-card:nth-child(2){ margin-top: 1rem; }
+  .service-grid .service-card:nth-child(4){ margin-top: -1rem; }
+}
+
+/* ==========================================================================
+   Quote — full-bleed photo + centered serif line, standing in for the
+   reference site's founder-quote section.
+   ========================================================================== */
+.quote{
+  position: relative;
+  padding-block: clamp(6rem, 14vw, 10rem);
+  overflow: hidden;
+}
+.quote__bg{
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: saturate(.85) brightness(.7);
+}
+.quote__scrim{
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,.75), rgba(0,0,0,.35) 40%, rgba(0,0,0,.75));
+}
+.quote__inner{
+  position: relative;
+  z-index: 1;
+  max-width: 46rem;
+  text-align: center;
+}
+.quote blockquote{ margin: 0 0 1.75rem; }
+.quote blockquote p{
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 3.6vw, 2.1rem);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--white);
+}
+.quote blockquote u{ text-decoration-color: rgba(255,255,255,.5); text-underline-offset: 4px; }
+.quote__attribution{ color: var(--ink-faint); font-size: .9rem; letter-spacing: .08em; text-transform: uppercase; }
+
+/* ==========================================================================
+   Final CTA + quick contact
+   ========================================================================== */
+.cta-footer{
+  position: relative;
+  background: var(--black);
+  padding-block: var(--gap-section) 4rem;
+}
+.cta-footer__grid{
+  display: grid;
+  gap: 3rem;
+}
+.cta-footer__intro h2{
+  font-size: clamp(1.9rem, 4vw, 2.75rem);
+  font-weight: 500;
+  margin-bottom: .85rem;
+}
+.cta-footer__intro p{
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  max-width: 44ch;
+  margin-bottom: 1.75rem;
+}
+.cta-footer__ctas{ display: flex; flex-wrap: wrap; gap: .85rem; }
+
+.footer__form{
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  background: var(--charcoal);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-card);
+  padding: 1.75rem;
+}
+.form-row{ display: flex; flex-direction: column; gap: .4rem; }
+.form-row label{ font-size: .85rem; font-weight: 600; color: var(--ink-soft); }
+.form-row input, .form-row textarea{
+  background: var(--near-black);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-input);
+  padding: .7rem .85rem;
+  font-family: var(--font-body);
+  font-size: .95rem;
+  color: var(--white);
+  resize: vertical;
+}
+.form-row input:focus, .form-row textarea:focus{ outline: none; border-color: rgba(255,255,255,.55); }
+.form-note{ font-size: .85rem; color: var(--ink-faint); min-height: 1.2em; }
+
+@media (min-width: 860px){
+  .cta-footer__grid{ grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
+}
+
+/* ==========================================================================
+   Footer — giant faint wordmark, standing in for the reference site's
+   footer treatment.
+   ========================================================================== */
+.site-footer{
+  position: relative;
+  background: var(--black);
+  border-top: 1px solid var(--line-soft);
+  padding-top: clamp(3rem, 7vw, 5rem);
+  overflow: hidden;
+}
+.site-footer__top{
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: clamp(2rem, 5vw, 3rem);
+}
+.site-footer__tagline{
+  font-size: clamp(1.4rem, 3.2vw, 2rem);
+  font-weight: 500;
+  max-width: 22ch;
+}
+.site-footer__links{ display: flex; flex-wrap: wrap; gap: 1.5rem; font-size: .9rem; }
+.site-footer__links a{ text-decoration: none; color: var(--ink-soft); }
+.site-footer__links a:hover{ color: var(--white); }
+.site-footer__social{ display: flex; gap: .75rem; }
+.site-footer__social a{
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  transition: color .2s var(--ease), border-color .2s var(--ease);
+}
+.site-footer__social a:hover{ color: var(--white); border-color: var(--white); }
+.site-footer__copy{ color: var(--ink-faint); font-size: .82rem; }
+
+.site-footer__watermark{
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: transparent;
+  -webkit-text-stroke: 1px var(--bronze-soft);
+  font-size: clamp(3.2rem, 15vw, 9rem);
+  line-height: .8;
+  white-space: nowrap;
+  text-align: center;
+  margin: 0;
+  letter-spacing: -.01em;
+  user-select: none;
+}
+
+@media (min-width: 720px){
+  .site-footer__top{ flex-direction: row; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; }
+  .site-footer__copy{ width: 100%; order: 4; }
+}

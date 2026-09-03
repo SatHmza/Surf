@@ -1,0 +1,9 @@
+{
+  "name": "Rabat Surf Club",
+  "short_name": "Rabat Surf Club",
+  "description": "Private and group surf lessons, board and wetsuit rental at Oudaya Beach, Rabat.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000"
+}

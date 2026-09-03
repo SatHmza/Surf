@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rabat Surf Club — Surf Lessons at Oudaya Beach</title>
+<meta name="description" content="Private and group surf lessons, board and wetsuit rental at Oudaya Beach, Rabat. All levels welcome. Book a session on WhatsApp.">
+<meta name="theme-color" content="#000000">
+
+<!-- Open Graph / Twitter Card — so a link to this site previews with a
+     real title, description and photo instead of a bare URL when shared
+     on WhatsApp, Instagram, iMessage, etc. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Rabat Surf Club">
+<meta property="og:title" content="Rabat Surf Club — Surf Lessons at Oudaya Beach">
+<meta property="og:description" content="Private and group surf lessons, board and wetsuit rental at Oudaya Beach, Rabat. All levels welcome. Book a session on WhatsApp.">
+<meta property="og:image" content="assets/img/surfer-barrel.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rabat Surf Club — Surf Lessons at Oudaya Beach">
+<meta name="twitter:description" content="Private and group surf lessons, board and wetsuit rental at Oudaya Beach, Rabat. All levels welcome. Book a session on WhatsApp.">
+<meta name="twitter:image" content="assets/img/surfer-barrel.jpg">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌊</text></svg>">
+<link rel="manifest" href="manifest.json">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="preload" as="image" href="assets/timelapse/ezgif-frame-001.jpg" fetchpriority="high">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="intro-active">
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- INTRO — full-screen loader borrowed from monarque-evenements.com: each
+     letter of the wordmark appears on its own (staggered via --i on every
+     .intro__char), it holds, then the whole wordmark shrinks down into the
+     nav's actual position before the rest of the site is revealed. The
+     shrink is computed live in js/main.js from the real nav brand
+     element's on-screen position/size (not a hardcoded transform), so it
+     lands correctly at any viewport width. Total sequence is a solid ~4s,
+     timed in js/main.js. -->
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro__inner" id="introInner">
+    <span class="intro__mark" id="introMark">
+      <svg width="34" height="34" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="50" cy="50" r="34"/>
+        <circle cx="50" cy="50" r="1.6" fill="currentColor" stroke="none"/>
+        <path d="M50 16 L54 46 L50 50 L46 46 Z" fill="currentColor" stroke="none" opacity="0.85"/>
+        <path d="M50 84 L54 54 L50 50 L46 54 Z" fill="currentColor" stroke="none" opacity="0.35"/>
+        <path d="M16 50 L46 46 L50 50 L46 54 Z" fill="currentColor" stroke="none" opacity="0.6"/>
+        <path d="M84 50 L54 46 L50 50 L54 54 Z" fill="currentColor" stroke="none" opacity="0.6"/>
+        <path d="M50 16 L50 6" stroke-width="0.6"/>
+        <path d="M50 84 L50 94" stroke-width="0.6"/>
+        <path d="M16 50 L6 50" stroke-width="0.6"/>
+        <path d="M84 50 L94 50" stroke-width="0.6"/>
+        <circle cx="50" cy="50" r="42" stroke-width="0.5" opacity="0.4"/>
+      </svg>
+    </span>
+    <span class="intro__wordmark" id="introWordmark"><span class="intro__char" style="--i:0">R</span><span class="intro__char" style="--i:1">a</span><span class="intro__char" style="--i:2">b</span><span class="intro__char" style="--i:3">a</span><span class="intro__char" style="--i:4">t</span><span class="intro__char intro__char--space" style="--i:5">&nbsp;</span><span class="intro__char" style="--i:6">S</span><span class="intro__char" style="--i:7">u</span><span class="intro__char" style="--i:8">r</span><span class="intro__char" style="--i:9">f</span><span class="intro__char intro__char--space" style="--i:10">&nbsp;</span><span class="intro__char" style="--i:11">C</span><span class="intro__char" style="--i:12">l</span><span class="intro__char" style="--i:13">u</span><span class="intro__char" style="--i:14">b</span></span>
+  </div>
+</div>
+<noscript><style>#intro{display:none!important} .site-header{opacity:1!important}</style></noscript>
+
+<!-- Floating pill nav, fixed over everything (matches the reference site's
+     capsule-shaped floating nav rather than a full-width bar). -->
+<header class="site-header" id="siteHeader">
+  <div class="nav-pill">
+    <a href="#heroScrollWrapper" class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="50" cy="50" r="34"/>
+          <circle cx="50" cy="50" r="1.6" fill="currentColor" stroke="none"/>
+          <path d="M50 16 L54 46 L50 50 L46 46 Z" fill="currentColor" stroke="none" opacity="0.85"/>
+          <path d="M50 84 L54 54 L50 50 L46 54 Z" fill="currentColor" stroke="none" opacity="0.35"/>
+          <path d="M16 50 L46 46 L50 50 L46 54 Z" fill="currentColor" stroke="none" opacity="0.6"/>
+          <path d="M84 50 L54 46 L50 50 L54 54 Z" fill="currentColor" stroke="none" opacity="0.6"/>
+          <path d="M50 16 L50 6" stroke-width="0.6"/>
+          <path d="M50 84 L50 94" stroke-width="0.6"/>
+          <path d="M16 50 L6 50" stroke-width="0.6"/>
+          <path d="M84 50 L94 50" stroke-width="0.6"/>
+          <circle cx="50" cy="50" r="42" stroke-width="0.5" opacity="0.4"/>
+        </svg>
+      </span>
+      <span class="brand__name">Rabat Surf Club</span>
+    </a>
+
+    <nav class="main-nav" id="mainNav" aria-label="Primary">
+      <a href="#about">About</a>
+      <a href="#lessons">Lessons</a>
+      <a href="#location">Location</a>
+    </nav>
+
+    <a class="btn btn--pill header-cta" href="https://wa.me/212600000000?text=Hi%20Rabat%20Surf%20Club%2C%20I%27d%20like%20to%20book%20a%20lesson" target="_blank" rel="noopener">Book Now</a>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="mainNav" aria-label="Toggle navigation menu">
+      <svg class="nav-toggle__icon nav-toggle__icon--menu" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <svg class="nav-toggle__icon nav-toggle__icon--close" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- HERO: scroll-scrubbed frame sequence, unchanged mechanic — restyled
+       only (black background, serif headline, single pill CTA) to match
+       the reference site's hero treatment. -->
+  <div class="hero-scroll-wrapper" id="heroScrollWrapper">
+    <div class="hero-sticky">
+      <canvas id="heroCanvas" aria-hidden="true"></canvas>
+      <div class="hero-vignette" aria-hidden="true"></div>
+
+      <div class="hero-beat" data-start="0" data-end="0.18">
+        <h1 class="hero-headline">
+          <span class="hero-headline__word">Catch</span> <span class="hero-headline__word">your</span> <span class="hero-headline__word">first</span> <span class="hero-headline__word">wave</span>
+        </h1>
+        <p class="hero-headline__sub">An easygoing surf club at Oudaya Beach, Rabat</p>
+      </div>
+      <div class="hero-beat" data-start="0.18" data-end="0.40">
+        <h2>Learn to surf on Rabat's most beginner-friendly break</h2>
+      </div>
+      <div class="hero-beat" data-start="0.40" data-end="0.62">
+        <h2>Private &amp; group lessons &middot; All skill levels</h2>
+      </div>
+      <div class="hero-beat" data-start="0.62" data-end="0.84">
+        <h2>Board &amp; wetsuit rental included</h2>
+      </div>
+
+      <!-- One persistent CTA instead of a per-beat button: it loads in once
+           and then stays put for the whole hero scroll, so only the
+           headline text above it changes as you scroll, not the button
+           itself. -->
+      <a class="btn btn--pill btn--lg hero-fixed-cta" href="https://wa.me/212600000000?text=Hi%20Rabat%20Surf%20Club%2C%20I%27d%20like%20to%20book%20a%20lesson" target="_blank" rel="noopener">Book on WhatsApp</a>
+
+      <div class="hero-progress" id="heroProgress" aria-hidden="true">
+        <span class="hero-progress__track"><span class="hero-progress__fill" id="heroProgressFill"></span></span>
+        <span class="hero-progress__dot" data-beat-index="0"></span>
+        <span class="hero-progress__dot" data-beat-index="1"></span>
+        <span class="hero-progress__dot" data-beat-index="2"></span>
+        <span class="hero-progress__dot" data-beat-index="3"></span>
+      </div>
+
+      <div class="hero-scroll-cue" id="heroScrollCue" aria-hidden="true">
+        <span>Scroll</span>
+        <span class="hero-scroll-cue__line"></span>
+      </div>
+
+      <div class="whiteout-overlay" id="whiteoutOverlay" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- WHY US — auto-scrolling marquee, standing in for the reference
+       site's "backed by" logo strip. We don't have real partner logos to
+       show, so this carries the same "quick scanning proof" role with
+       plain-text facts instead of fabricating brand endorsements. -->
+  <section class="marquee-strip" aria-label="Why Rabat Surf Club">
+    <p class="marquee-strip__label">Why Rabat Surf Club</p>
+    <div class="marquee">
+      <div class="marquee__track" aria-hidden="true">
+        <span>Beginner Friendly</span><span class="marquee__dot">•</span>
+        <span>All Skill Levels</span><span class="marquee__dot">•</span>
+        <span>Board &amp; Wetsuit Included</span><span class="marquee__dot">•</span>
+        <span>FR / EN / AR Instruction</span><span class="marquee__dot">•</span>
+        <span>Oudaya Beach, Rabat</span><span class="marquee__dot">•</span>
+        <span>Beginner Friendly</span><span class="marquee__dot">•</span>
+        <span>All Skill Levels</span><span class="marquee__dot">•</span>
+        <span>Board &amp; Wetsuit Included</span><span class="marquee__dot">•</span>
+        <span>FR / EN / AR Instruction</span><span class="marquee__dot">•</span>
+        <span>Oudaya Beach, Rabat</span><span class="marquee__dot">•</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about" id="about">
+    <div class="section-inner about__grid">
+      <div class="about__media">
+        <!-- TODO: swap for real club / instructor photo -->
+        <img src="assets/img/palms-beach-cove.jpg" alt="Palm-lined cove near Oudaya Beach, Rabat" loading="lazy" width="1200" height="1553">
+      </div>
+      <div class="about__copy">
+        <h2>Surfing, the way it should feel</h2>
+        <p>Rabat Surf Club started as a few friends paddling out at Oudaya every morning before work. Now we teach anyone who wants in, total beginners welcome. No egos, no gear that makes you feel silly.</p>
+        <p>Just good waves, mint tea after, and a break that somehow never gets too crowded.</p>
+        <ul class="about__facts">
+          <li class="about__fact">
+            <span class="about__fact-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8c1.5-3 3.5-3 5 0s3.5 3 5 0 3.5-3 5 0 3.5 3 5 0"/><path d="M1 16c1.5-3 3.5-3 5 0s3.5 3 5 0 3.5-3 5 0 3.5 3 5 0"/></svg></span>
+            <strong>A-frame wave</strong><span>Peels both ways, gentle enough for a first lesson</span>
+          </li>
+          <li class="about__fact">
+            <span class="about__fact-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span>
+            <strong>Oct – Mar</strong><span>Peak season, consistent Atlantic swell</span>
+          </li>
+          <li class="about__fact">
+            <span class="about__fact-icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg></span>
+            <strong>FR / EN / AR</strong><span>Instruction in whichever language is easiest for you</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- DAILY SCHEDULE — time-of-day narrative beats, a device borrowed from
+       zorge9.estate's "daily schedule" section: big serif time markers
+       paired with short sensory copy instead of plain bullet points. -->
+  <section class="schedule" aria-label="A morning at Rabat Surf Club">
+    <div class="section-inner">
+      <div class="section-head section-head--tight">
+        <h2>A morning at Rabat Surf Club</h2>
+      </div>
+      <div class="schedule__list">
+        <div class="schedule__row">
+          <span class="schedule__time">07:00</span>
+          <p>First light over the Kasbah. The wind is still asleep and the wave peels clean and slow — the best hour of the day for a first lesson.</p>
+        </div>
+        <div class="schedule__row">
+          <span class="schedule__time">10:00</span>
+          <p>Boards waxed, wetsuits on. Groups paddle out together, coached in from the shoulder of the wave one at a time.</p>
+        </div>
+        <div class="schedule__row">
+          <span class="schedule__time">13:00</span>
+          <p>Out of the water, mint tea in hand, replaying the best wave of the morning with the people who just watched you catch it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GALLERY — dense photo masonry, standing in for the reference site's
+       member-portrait grid. -->
+  <section class="gallery" id="gallery">
+    <div class="section-inner">
+      <div class="section-head section-head--tight">
+        <h2>A few mornings at Oudaya</h2>
+      </div>
+      <!-- TODO: replace every image below with real club / student / Oudaya Beach photography -->
+      <div class="gallery__grid">
+        <img class="gallery__img" src="assets/img/surfer-barrel.jpg" alt="Surfer riding inside a breaking wave" loading="lazy" width="1200" height="800">
+        <img class="gallery__img" src="assets/img/surfer-turn-spray.jpg" alt="Surfer carving a sharp turn, spraying water" loading="lazy" width="1200" height="800">
+        <img class="gallery__img" src="assets/img/wetsuit-wave.jpg" alt="Surfer in a wetsuit dropping into a wave" loading="lazy" width="1200" height="800">
+        <img class="gallery__img" src="assets/img/palm-sunset.jpg" alt="Palm trees silhouetted against a pink sunset sky" loading="lazy" width="1600" height="1014">
+        <img class="gallery__img" src="assets/img/surfer-sunset.jpg" alt="Surfer sitting on a board silhouetted at sunset" loading="lazy" width="1200" height="801">
+        <img class="gallery__img" src="assets/img/board-on-sand.jpg" alt="A yellow longboard standing upright in the sand" loading="lazy" width="1200" height="800">
+        <img class="gallery__img" src="assets/img/two-palms-cove.jpg" alt="Two palm trees over a quiet cove" loading="lazy" width="1200" height="1800">
+        <img class="gallery__img" src="assets/img/feet-on-board.jpg" alt="Surfer's feet on a longboard, riding a gentle wave" loading="lazy" width="1200" height="800">
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS — a draggable/arrow-controlled carousel. These are real
+       Google reviews for Rabat Surf Club (Google Maps listing, 4.9★ average
+       / 594 reviews as of Sept 2026), quoted as posted — trimmed to the
+       opening sentences where a review ran long, never reworded. Left in
+       the reviewer's own language (French) rather than translated, since
+       translating would mean the quote is no longer their actual words.
+       Avatars are plain initials rather than photos, since we don't have
+       the reviewers' permission to use their profile pictures. -->
+  <section class="testimonials" aria-label="What students say">
+    <div class="testimonials__viewport" id="testimonialsViewport" tabindex="0">
+      <div class="testimonials__track">
+        <article class="testimonial-card"><span class="testimonial-card__avatar">A</span><div class="testimonial-card__rating" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg></div><h3>Amel El</h3><p class="testimonial-card__role">Google review · 2 months ago</p><p lang="fr">"Excellente école de surf ! L'ambiance y est conviviale et chaleureuse dès le premier jour. Toute l'équipe est accueillante, professionnelle et toujours de bonne humeur."</p></article>
+        <article class="testimonial-card"><span class="testimonial-card__avatar">A</span><div class="testimonial-card__rating" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg></div><h3>Amélie Macaire</h3><p class="testimonial-card__role">Google review · 7 months ago</p><p lang="fr">"Rabat Surf Club, c'est le meilleur club de surf du Maroc ! Jalal et l'équipe des coachs sont présents toute l'année et très professionnels !"</p></article>
+        <article class="testimonial-card"><span class="testimonial-card__avatar">J</span><div class="testimonial-card__rating" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2.5 14.23,8.93 21.04,9.06 15.61,13.17 17.58,19.69 12,15.8 6.42,19.69 8.39,13.17 2.96,9.06 9.77,8.93"/></svg></div><h3>Justine Pitiot</h3><p class="testimonial-card__role">Google review · Local Guide · 5 months ago</p><p lang="fr">"C'était génial !!!! Le club est trop cool, il y a une super ambiance, tout le monde est super gentil et il y a des douches. J'avais un super coach très encourageant !! Il me tarde de revenir !!"</p></article>
+      </div>
+    </div>
+    <div class="testimonials__controls">
+      <button type="button" class="testimonials__arrow" id="testimonialsPrev" data-dir="-1" aria-label="Previous review" aria-controls="testimonialsViewport">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <a class="text-link testimonials__more" href="https://www.google.com/maps/place/Rabat+Surf+club+%28maroc%29/data=!4m7!3m6!1s0xda76c0a60f0765b:0x8ea73acf5c2809d1!8m2!3d34.0327108!4d-6.8386411!16s%2Fg%2F11btwrb2nm!19sChIJW3bwYApspw0R0QkoXM86p44" target="_blank" rel="noopener">Read all 594 reviews on Google<span class="text-link__arrow" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span></a>
+      <button type="button" class="testimonials__arrow" id="testimonialsNext" data-dir="1" aria-label="Next review" aria-controls="testimonialsViewport">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    </div>
+  </section>
+
+  <!-- LOCATION -->
+  <section class="location" id="location">
+    <span class="motif motif--compass-location reveal-scale" aria-hidden="true">
+      <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="50" cy="50" r="34"/>
+        <circle cx="50" cy="50" r="1.6" fill="currentColor" stroke="none"/>
+        <path d="M50 16 L54 46 L50 50 L46 46 Z" fill="currentColor" stroke="none" opacity="0.85"/>
+        <path d="M50 84 L54 54 L50 50 L46 54 Z" fill="currentColor" stroke="none" opacity="0.35"/>
+        <path d="M16 50 L46 46 L50 50 L46 54 Z" fill="currentColor" stroke="none" opacity="0.6"/>
+        <path d="M84 50 L54 46 L50 50 L54 54 Z" fill="currentColor" stroke="none" opacity="0.6"/>
+        <path d="M50 16 L50 6" stroke-width="0.6"/>
+        <path d="M50 84 L50 94" stroke-width="0.6"/>
+        <path d="M16 50 L6 50" stroke-width="0.6"/>
+        <path d="M84 50 L94 50" stroke-width="0.6"/>
+        <circle cx="50" cy="50" r="42" stroke-width="0.5" opacity="0.4"/>
+      </svg>
+    </span>
+    <span class="motif motif--wave-location reveal-scale" aria-hidden="true">
+      <svg viewBox="0 0 200 80" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 50 C 20 30, 35 30, 50 50 C 65 70, 80 70, 95 50 C 110 30, 125 30, 140 50 C 155 70, 170 70, 185 50 C 192 42, 196 40, 198 38"/>
+        <path d="M10 62 C 25 48, 38 48, 50 62 C 62 76, 75 76, 87 62" stroke-width="0.6" opacity="0.6"/>
+        <path d="M120 20 C 124 12, 130 9, 138 10 C 134 4, 136 -2, 142 -4" stroke-width="0.8" transform="translate(0,18)"/>
+        <circle cx="150" cy="14" r="1.4" fill="currentColor" stroke="none" opacity="0.7"/>
+        <circle cx="158" cy="9" r="1" fill="currentColor" stroke="none" opacity="0.5"/>
+      </svg>
+    </span>
+    <div class="section-inner location__grid">
+      <div class="location__copy">
+        <h2>Find us at Oudaya Beach</h2>
+        <p>Right where the Bou Regreg meets the Atlantic, beneath the walls of the Kasbah of the Udayas. The A-frame peak here breaks gently in both directions, making it one of the most forgiving beginner waves on this stretch of coast.</p>
+        <dl class="location__details">
+          <div>
+            <dt><span class="location__pin" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-7.2 7-12a7 7 0 1 0-14 0c0 4.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.5"/></svg></span>Address</dt>
+            <dd>Oudaya Beach, Rabat, Morocco</dd>
+          </div>
+          <div>
+            <dt>Peak season</dt>
+            <dd>October to March</dd>
+          </div>
+          <div>
+            <dt>Good for</dt>
+            <dd>Complete beginners through advanced surfers</dd>
+          </div>
+        </dl>
+        <a class="text-link" href="https://www.google.com/maps/place/Rabat+Surf+club+%28maroc%29/data=!4m7!3m6!1s0xda76c0a60f0765b:0x8ea73acf5c2809d1!8m2!3d34.0327108!4d-6.8386411!16s%2Fg%2F11btwrb2nm!19sChIJW3bwYApspw0R0QkoXM86p44?authuser=0&hl=fr&g_ep=EgoyMDI2MDgzMS4wIJJjKgBIAVAD&rclk=1" target="_blank" rel="noopener">Open in Google Maps<span class="text-link__arrow" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></span></a>
+      </div>
+      <div class="location__map">
+        <iframe
+          title="Map showing Rabat Surf Club, Oudaya Beach, Rabat, Morocco"
+          src="https://maps.google.com/maps?q=Rabat+Surf+Club,34.0327108,-6.8386411&z=16&output=embed"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade">
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- BY THE NUMBERS — placeholder figures, standing in for the reference
+       site's stats row. -->
+  <section class="stats" aria-label="Rabat Surf Club by the numbers">
+    <div class="section-inner">
+      <h2 class="stats__heading">By the Numbers</h2>
+      <!-- TODO: replace every figure below with a real number before this
+           site is shown as a live site -->
+      <div class="stats__grid">
+        <div class="stat"><span class="stat__value">500+</span><span class="stat__label">Lessons Taught</span></div>
+        <div class="stat"><span class="stat__value">4.9</span><span class="stat__label">Average Rating</span></div>
+        <div class="stat"><span class="stat__value">6</span><span class="stat__label">Years Running</span></div>
+        <div class="stat"><span class="stat__value">3</span><span class="stat__label">Languages Spoken</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSONS & SERVICES — staggered offset photo grid, standing in for
+       the reference site's "special guests" layout. -->
+  <section class="lessons" id="lessons">
+    <div class="section-inner">
+      <div class="section-head">
+        <h2>Lessons and gear for every level</h2>
+        <p>Private and group lessons, board and wetsuit rental. All levels welcome, from your first pop-up to your first proper barrel.</p>
+      </div>
+
+      <div class="service-grid">
+        <article class="service-card">
+          <img src="assets/img/feet-on-board.jpg" alt="Surfer's feet on a longboard, riding a gentle wave" loading="lazy" width="1200" height="800">
+          <div class="service-card__caption">
+            <span class="service-card__icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M4.5 20c0-4.2 3.4-6.5 7.5-6.5s7.5 2.3 7.5 6.5"/></svg></span>
+            <h3>Private Lessons</h3>
+            <p>One-on-one coaching, paced to you</p>
+          </div>
+        </article>
+
+        <article class="service-card">
+          <img src="assets/img/surfer-turn-spray.jpg" alt="Surfer carving a sharp turn, spraying water" loading="lazy" width="1200" height="800">
+          <div class="service-card__caption">
+            <span class="service-card__icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M2.5 20c0-3.6 2.9-5.5 6.5-5.5s6.5 1.9 6.5 5.5"/><circle cx="17" cy="8.5" r="2.5"/><path d="M15.5 13.3c2.7.4 4.5 2 4.5 5.2"/></svg></span>
+            <h3>Group Lessons</h3>
+            <p>Small groups, big energy</p>
+          </div>
+        </article>
+
+        <article class="service-card">
+          <img src="assets/img/board-on-sand.jpg" alt="A yellow longboard standing upright in the sand" loading="lazy" width="1200" height="800">
+          <div class="service-card__caption">
+            <span class="service-card__icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9.5" y="2" width="5" height="20" rx="2.5"/><line x1="12" y1="4.5" x2="12" y2="19.5"/></svg></span>
+            <h3>Board Rental</h3>
+            <p>Foam to shortboard, half or full day</p>
+          </div>
+        </article>
+
+        <article class="service-card">
+          <img src="assets/img/wetsuit-wave.jpg" alt="Surfer in a wetsuit dropping into a wave" loading="lazy" width="1200" height="800">
+          <div class="service-card__caption">
+            <span class="service-card__icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c3.5 4.4 6 8.2 6 11a6 6 0 1 1-12 0c0-2.8 2.5-6.6 6-11Z"/></svg></span>
+            <h3>Wetsuit Rental</h3>
+            <p>Every size, cleaned and ready</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUOTE — full-bleed photo + brand line, standing in for the reference
+       site's founder-quote section. -->
+  <section class="quote">
+    <img class="quote__bg" src="assets/img/palm-sunset.jpg" alt="" aria-hidden="true" loading="lazy">
+    <div class="quote__scrim" aria-hidden="true"></div>
+    <div class="section-inner quote__inner">
+      <blockquote>
+        <p>"The wave doesn't care who you are or where you're from. It only asks that you <u>show up</u> and try. Everything else — the balance, the confidence, the grin after your first ride — <u>follows on its own</u>."</p>
+      </blockquote>
+      <p class="quote__attribution">Rabat Surf Club</p>
+    </div>
+  </section>
+
+  <!-- FINAL CTA + quick contact -->
+  <section class="cta-footer" id="contact">
+    <span class="motif motif--wave-footer reveal-scale" aria-hidden="true">
+      <svg viewBox="0 0 200 80" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 50 C 20 30, 35 30, 50 50 C 65 70, 80 70, 95 50 C 110 30, 125 30, 140 50 C 155 70, 170 70, 185 50 C 192 42, 196 40, 198 38"/>
+        <path d="M10 62 C 25 48, 38 48, 50 62 C 62 76, 75 76, 87 62" stroke-width="0.6" opacity="0.6"/>
+        <path d="M120 20 C 124 12, 130 9, 138 10 C 134 4, 136 -2, 142 -4" stroke-width="0.8" transform="translate(0,18)"/>
+        <circle cx="150" cy="14" r="1.4" fill="currentColor" stroke="none" opacity="0.7"/>
+        <circle cx="158" cy="9" r="1" fill="currentColor" stroke="none" opacity="0.5"/>
+      </svg>
+    </span>
+    <div class="section-inner cta-footer__grid">
+      <div class="cta-footer__intro">
+        <h2>Ready to paddle out?</h2>
+        <p>Message us on WhatsApp for the fastest reply, or send a note below and we'll get back to you.</p>
+        <div class="cta-footer__ctas">
+          <a class="btn btn--pill btn--lg" href="https://wa.me/212600000000?text=Hi%20Rabat%20Surf%20Club%2C%20I%27d%20like%20to%20book%20a%20lesson" target="_blank" rel="noopener">Book on WhatsApp</a>
+          <a class="btn btn--outline btn--lg" href="https://instagram.com/rabatsurfclub" target="_blank" rel="noopener">@rabatsurfclub</a>
+        </div>
+      </div>
+
+      <form class="footer__form" id="contactForm" novalidate>
+        <div class="form-row">
+          <label for="cf-name">Name</label>
+          <input type="text" id="cf-name" name="name" autocomplete="name" required>
+        </div>
+        <div class="form-row">
+          <label for="cf-message">Message</label>
+          <textarea id="cf-message" name="message" rows="3" placeholder="Tell us your dates and how many people" required></textarea>
+        </div>
+        <button type="submit" class="btn btn--pill btn--block">Send via WhatsApp</button>
+        <p class="form-note" id="formNote" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER — giant faint wordmark, standing in for the reference site's
+       footer treatment. -->
+  <footer class="site-footer">
+    <div class="section-inner site-footer__top">
+      <h2 class="site-footer__tagline">The friendliest way to<br>learn to surf in Rabat</h2>
+      <nav class="site-footer__links" aria-label="Footer">
+        <a href="#about">About</a>
+        <a href="#lessons">Lessons</a>
+        <a href="#location">Location</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="site-footer__social">
+        <a href="https://instagram.com/rabatsurfclub" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+        </a>
+        <a href="https://wa.me/212600000000" target="_blank" rel="noopener" aria-label="WhatsApp">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.5 0-10 4.5-10 10 0 1.77.46 3.45 1.27 4.9L2 22l5.25-1.38A9.96 9.96 0 0 0 12.04 22c5.5 0 10-4.5 10-10s-4.5-10-10-10Zm0 18.2c-1.6 0-3.1-.43-4.4-1.2l-.32-.19-3.1.82.83-3.03-.2-.31a8.18 8.18 0 0 1-1.25-4.29c0-4.53 3.7-8.2 8.24-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2Z"/></svg>
+        </a>
+      </div>
+      <p class="site-footer__copy">&copy; <span id="year"></span> Rabat Surf Club &middot; Oudaya Beach, Rabat, Morocco</p>
+    </div>
+    <p class="site-footer__watermark" aria-hidden="true">RABAT SURF CLUB</p>
+  </footer>
+
+</main>
+
+<!-- Floating WhatsApp shortcut: separate from the header's CTA, floats in
+     once the hero has been scrolled past (see js/main.js), tucks away
+     again near the footer so it never doubles up with the footer CTA. -->
+<a class="floating-cta" id="floatingCta" href="https://wa.me/212600000000?text=Hi%20Rabat%20Surf%20Club%2C%20I%27d%20like%20to%20book%20a%20lesson" target="_blank" rel="noopener" aria-label="Book a lesson on WhatsApp">
+  <span class="floating-cta__ring" aria-hidden="true"></span>
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.04 2c-5.5 0-10 4.5-10 10 0 1.77.46 3.45 1.27 4.9L2 22l5.25-1.38A9.96 9.96 0 0 0 12.04 22c5.5 0 10-4.5 10-10s-4.5-10-10-10Zm0 18.2c-1.6 0-3.1-.43-4.4-1.2l-.32-.19-3.1.82.83-3.03-.2-.31a8.18 8.18 0 0 1-1.25-4.29c0-4.53 3.7-8.2 8.24-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2Zm4.5-6.13c-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.78.95-.14.16-.29.18-.53.06-.24-.12-1.02-.38-1.95-1.2-.72-.64-1.2-1.44-1.34-1.68-.14-.24-.02-.37.11-.49.11-.11.24-.29.36-.43.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.32-.75-1.81-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.42.06-.64.3-.22.24-.84.82-.84 2s.86 2.32.98 2.48c.12.16 1.7 2.6 4.13 3.64.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28Z"/></svg>
+</a>
+
+<script src="js/main.js" defer></script>
+<script src="js/hero-scroll.js" defer></script>
+</body>
+</html>
