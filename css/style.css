@@ -616,31 +616,6 @@ body.intro-active{ overflow: hidden; }
 .hero-headline__word:nth-child(3){ animation-delay: .25s; }
 .hero-headline__word:nth-child(4){ animation-delay: .35s; }
 
-/* The headline is now a real <button> (js/hero-scroll.js uses it to start
-   the intro sequence) — this strips every bit of default button chrome
-   (background, border, padding, the browser's own form-control font) so it
-   still looks exactly like plain heading text, just genuinely clickable.
-   `all: unset` resets inheritable properties like font/color/letter-spacing
-   back to what they'd inherit from .hero-headline above, bypassing the
-   browser's button UA-stylesheet override entirely. */
-.hero-headline__cta{
-  all: unset;
-  cursor: pointer;
-  /* .hero-beat (the parent) sets pointer-events: none on itself so
-     overlapping beat text never blocks clicks meant for whatever's
-     layered underneath (same reason .hero-fixed-cta below re-enables it)
-     — without this override, `all: unset` inherits that "none" straight
-     down and the button is unclickable no matter what JS does with its
-     progress-based pointer-events toggle further down. */
-  pointer-events: auto;
-}
-.hero-headline__cta:hover{ opacity: .88; }
-.hero-headline__cta:focus-visible{
-  outline: 2px solid rgba(255,255,255,.65);
-  outline-offset: 8px;
-  border-radius: 4px;
-}
-
 .hero-headline__sub{
   font-family: var(--font-body);
   font-size: clamp(.92rem, 1.5vw, 1.08rem);
