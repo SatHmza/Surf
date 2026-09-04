@@ -16,6 +16,9 @@
   const progressDots = Array.from(document.querySelectorAll('.hero-progress__dot'));
   const progressFill = document.getElementById('heroProgressFill');
   const scrollCue = document.getElementById('heroScrollCue');
+  // "Catch your first wave" — see playIntro() further down. Real <button>
+  // now (index.html), styled to look identical (css/style.css).
+  const heroPlayBtn = document.getElementById('heroPlayBtn');
   const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Adaptive quality: the markup carries no <source>; pick the encode by
@@ -239,6 +242,15 @@
     sticky.style.opacity = String(1 - exit);
     // don't leave an invisible CTA hovering over the ocean, catching clicks
     sticky.style.pointerEvents = exit > 0.4 ? 'none' : '';
+
+    // The play button only makes sense at the very start — once the user
+    // (or playIntro() itself) has actually moved past it, disable it so a
+    // stray tap later in the scroll (this beat sits at opacity 0 but is
+    // still a real element occupying the same screen area other beats'
+    // text now visibly is) can't re-trigger the whole animation while
+    // someone's mid-scroll, which is exactly the "fighting the browser's
+    // native scrolling" this feature has to avoid.
+    if (heroPlayBtn) heroPlayBtn.style.pointerEvents = progress > 0.03 ? 'none' : '';
   }
 
   // Runs every animation frame while there's ground to cover between the
@@ -283,6 +295,100 @@
       });
     }, { threshold: 0 });
     reentryIo.observe(wrapper);
+  }
+
+  // ------------------------------------------------------------------
+  // "Catch your first wave" as a play button. Clicking/tapping it drives
+  // the EXACT SAME scroll-derived sequence above by animating the real
+  // window scroll position from the top of the hero to its end — nothing
+  // about render()/tick()/getTargetProgress() changes at all, they just
+  // keep reacting to a scroll position that happens to be moving on its
+  // own instead of under a finger/wheel. That's deliberate: it's the only
+  // way to get "exactly as it behaves when the user manually scrolls"
+  // without a second, parallel animation system to keep in sync with this
+  // one — the existing 'scroll' listener (see wake() above) picks up each
+  // programmatic scrollTo() the same way it picks up a real one.
+  // ------------------------------------------------------------------
+  let introPlaying = false;
+
+  function blockScrollInput(e) { e.preventDefault(); }
+  const SCROLL_KEYS = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '];
+  function blockScrollKeys(e) {
+    if (SCROLL_KEYS.indexOf(e.key) !== -1) e.preventDefault();
+  }
+  // While playIntro()'s own animation is driving the scroll position, a
+  // simultaneous manual wheel/touch/key scroll would add its own delta on
+  // top of ours every frame — a jittery tug-of-war rather than a clean
+  // play-through. Intercepting the input events (not touching CSS overflow,
+  // which would also block our own scrollTo()) keeps it clean; removed the
+  // moment the animation ends, handing scrolling straight back.
+  function lockManualScroll() {
+    window.addEventListener('wheel', blockScrollInput, { passive: false });
+    window.addEventListener('touchmove', blockScrollInput, { passive: false });
+    window.addEventListener('keydown', blockScrollKeys);
+  }
+  function unlockManualScroll() {
+    window.removeEventListener('wheel', blockScrollInput, { passive: false });
+    window.removeEventListener('touchmove', blockScrollInput, { passive: false });
+    window.removeEventListener('keydown', blockScrollKeys);
+  }
+
+  function playIntro() {
+    if (introPlaying) return;
+    // Should already be unreachable once scrolled past (render() disables
+    // the button's pointer-events above 0.03), but double-guard in case
+    // something else ever calls this directly.
+    if (getTargetProgress() > 0.03) return;
+
+    const scrollable = wrapper.offsetHeight - window.innerHeight;
+    if (scrollable <= 0) return;
+
+    const startY = window.scrollY;
+    const wrapperDocTop = startY + wrapper.getBoundingClientRect().top;
+    const targetY = wrapperDocTop + scrollable;
+    const distance = targetY - startY;
+    if (distance <= 0) return;
+
+    if (reducedMotion) {
+      // No animated tween for this preference — jump straight to the end,
+      // same as every other standing motion effect in this file skips its
+      // animated version under reduced motion.
+      window.scrollTo(0, targetY);
+      wake();
+      return;
+    }
+
+    introPlaying = true;
+    lockManualScroll();
+
+    // Fixed wall-clock duration regardless of device/hero height — this is
+    // a deliberate "play the intro" pace, not a stand-in for how fast any
+    // particular person happens to scroll. Linear scroll-position
+    // progression is intentional too: tick()'s own SMOOTHING lerp already
+    // adds the eased, slightly-lagging feel a real scroll gesture gets, so
+    // easing it again here would double up and read as mushy/laggy.
+    const DURATION_MS = 3400;
+    let startTs = null;
+
+    function step(ts) {
+      if (startTs === null) startTs = ts;
+      const t = Math.min(1, (ts - startTs) / DURATION_MS);
+      window.scrollTo(0, startY + distance * t);
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        introPlaying = false;
+        unlockManualScroll();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  if (heroPlayBtn) {
+    heroPlayBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      playIntro();
+    });
   }
 
   function init() {
